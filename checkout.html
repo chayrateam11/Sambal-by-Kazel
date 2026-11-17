@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout Pembayaran - Sambal by Kazel</title>
+  <meta name="description" content="Selesaikan pemesanan aneka sambal kemasan Sambal by Kazel dengan pengiriman aman dan metode pembayaran lengkap QRIS, Virtual Account, dan COD.">
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  
+  <!-- Google Fonts & Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  
+  <!-- Tailwind CSS via CDN & External Custom Config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/js/tailwind.config.js"></script>
+  
+  <!-- Master Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="bg-background text-on-surface flex flex-col min-h-screen antialiased selection:bg-primary-fixed selection:text-primary">
+
+  <!-- Header Component (Ticker & Responsive Navigation with Drawer) -->
+  <app-header active=""></app-header>
+
+  <!-- MAIN CHECKOUT SECTION -->
+  <main class="flex-grow py-6 sm:py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- 4-LANGKAH CHECKOUT STEPPER INDICATOR -->
+      <div class="mb-8">
+        <div class="grid grid-cols-4 gap-2 text-center text-xs font-extrabold">
+          <div class="flex flex-col items-center text-green-700">
+            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mb-1">
+              <span class="material-symbols-outlined text-sm">check</span>
+            </div>
+            <span>1. Keranjang</span>
+          </div>
+          <div class="flex flex-col items-center text-primary">
+            <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center mb-1 shadow-md shadow-primary/20">
+              <span>2</span>
+            </div>
+            <span>2. Data Penerima</span>
+          </div>
+          <div class="flex flex-col items-center text-primary">
+            <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center mb-1 shadow-md shadow-primary/20">
+              <span>3</span>
+            </div>
+            <span>3. Pengiriman</span>
+          </div>
+          <div class="flex flex-col items-center text-on-surface-variant">
+            <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center mb-1">
+              <span>4</span>
+            </div>
+            <span>4. Selesai</span>
+          </div>
+        </div>
+        <div class="w-full bg-surface-container-high h-1 rounded-full mt-3 overflow-hidden">
+          <div class="bg-primary h-full w-3/4 transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <!-- MAIN CHECKOUT FORM & STICKY SUMMARY -->
+      <form id="checkoutForm" onsubmit="handleFormSubmit(event)" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- LEFT COLUMN: FORM DETAILS (7 Cols) -->
+        <div class="lg:col-span-7 space-y-6">
+          
+          <!-- STEP 1: ALAMAT & DATA PENERIMA -->
+          <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/60 p-5 sm:p-6 shadow-sm space-y-4">
+            <div class="flex items-center gap-2 border-b border-outline-variant/40 pb-3">
+              <span class="material-symbols-outlined text-primary text-2xl">location_on</span>
+              <h2 class="font-extrabold text-base text-on-surface">1. Alamat & Kontak Penerima</h2>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">Nama Lengkap Penerima <span class="text-primary">*</span></label>
+                <input type="text" id="custName" required placeholder="Contoh: Budi Santoso" class="w-full p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/60 text-xs sm:text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">No. WhatsApp / Telepon <span class="text-primary">*</span></label>
+                <input type="tel" id="custPhone" required placeholder="Contoh: 081234567890" class="w-full p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/60 text-xs sm:text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">Kota / Kabupaten <span class="text-primary">*</span></label>
+                <select id="custCity" required class="w-full p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/60 text-xs sm:text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary font-medium">
+                  <option value="Jakarta Selatan">DKI Jakarta - Jakarta Selatan</option>
+                  <option value="Jakarta Pusat">DKI Jakarta - Jakarta Pusat</option>
+                  <option value="Jakarta Barat">DKI Jakarta - Jakarta Barat</option>
+                  <option value="Surabaya">Jawa Timur - Kota Surabaya</option>
+                  <option value="Bandung">Jawa Barat - Kota Bandung</option>
+                  <option value="Semarang">Jawa Tengah - Kota Semarang</option>
+                  <option value="Yogyakarta">DI Yogyakarta - Kota Yogyakarta</option>
+                  <option value="Tangerang Selatan">Banten - Tangerang Selatan</option>
+                  <option value="Medan">Sumatera Utara - Kota Medan</option>
+                  <option value="Denpasar">Bali - Kota Denpasar</option>
+                  <option value="Makassar">Sulawesi Selatan - Kota Makassar</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">Kode Pos <span class="text-primary">*</span></label>
+                <input type="text" id="custPostal" required placeholder="Contoh: 12430" class="w-full p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/60 text-xs sm:text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-on-surface mb-1">Alamat Lengkap Pengiriman <span class="text-primary">*</span></label>
+              <textarea id="custAddress" required rows="2" placeholder="Nama Jalan, Nomor Rumah, RT/RW, Patokan / Nomor Kamar Apartemen" class="w-full p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/60 text-xs sm:text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+            </div>
+          </div>
+
+          <!-- STEP 2: PILIHAN KURIR EKSPEDISI -->
+          <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/60 p-5 sm:p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-outline-variant/40 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-2xl">local_shipping</span>
+                <h2 class="font-extrabold text-base text-on-surface">2. Pilihan Kurir Ekspedisi</h2>
+              </div>
+              <span id="freeShippingCourierPill" class="hidden text-[11px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-md">
+                Bebas Ongkir Aktif
+              </span>
+            </div>
+
+            <div class="space-y-3" id="courierOptionsContainer">
+              <!-- Paxel -->
+              <label class="courier-card flex items-center justify-between p-3.5 rounded-xl border-2 border-primary bg-primary-fixed/20 cursor-pointer transition-all">
+                <div class="flex items-center gap-3">
+                  <input type="radio" name="courierOption" value="paxel" checked onchange="handleCourierChange('paxel', 'Paxel Next Day Chilled')" class="text-primary focus:ring-primary">
+                  <div>
+                    <div class="font-bold text-xs sm:text-sm text-on-surface flex items-center gap-2">
+                      <span>Paxel Next Day Chilled</span>
+                      <span class="text-[10px] bg-primary text-white px-2 py-0.5 rounded-full font-bold">Rekomendasi</span>
+                    </div>
+                    <div class="text-[11px] text-on-surface-variant">Estimasi tiba besok siang (Fasilitas pendingin aman makanan)</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span id="paxelRateDisplay" class="font-black text-xs sm:text-sm text-primary">Rp 18.000</span>
+                </div>
+              </label>
+
+              <!-- J&T -->
+              <label class="courier-card flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/60 bg-surface-container-low cursor-pointer transition-all">
+                <div class="flex items-center gap-3">
+                  <input type="radio" name="courierOption" value="jnt" onchange="handleCourierChange('jnt', 'J&T Express Reguler')" class="text-primary focus:ring-primary">
+                  <div>
+                    <div class="font-bold text-xs sm:text-sm text-on-surface">J&T Express Reguler</div>
+                    <div class="text-[11px] text-on-surface-variant">Estimasi 1-3 hari kerja dengan kardus tebal</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span id="jntRateDisplay" class="font-black text-xs sm:text-sm text-on-surface">Rp 12.000</span>
+                </div>
+              </label>
+
+              <!-- Grab Instant -->
+              <label class="courier-card flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/60 bg-surface-container-low cursor-pointer transition-all">
+                <div class="flex items-center gap-3">
+                  <input type="radio" name="courierOption" value="grab" onchange="handleCourierChange('grab', 'Grab Instant / Sameday')" class="text-primary focus:ring-primary">
+                  <div>
+                    <div class="font-bold text-xs sm:text-sm text-on-surface">Grab Instant / Sameday</div>
+                    <div class="text-[11px] text-on-surface-variant">Langsung dikirim dari dapur hub terdekat (1-3 jam)</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span id="grabRateDisplay" class="font-black text-xs sm:text-sm text-on-surface">Rp 32.000</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- STEP 3: KARTU UCAPAN KADO (GIFT CARD) -->
+          <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/60 p-5 sm:p-6 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="flex items-center gap-2 cursor-pointer font-bold text-xs sm:text-sm text-on-surface">
+                <input type="checkbox" id="giftCardCheckbox" onchange="toggleGiftCard(this.checked)" class="w-4 h-4 text-primary rounded focus:ring-primary">
+                <span class="flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-secondary text-lg">card_giftcard</span>
+                  <span>Kirim Sebagai Kado / Hampers (Gratis Kartu Ucapan)</span>
+                </span>
+              </label>
+            </div>
+
+            <div id="giftCardSection" class="hidden space-y-2 pt-2">
+              <label class="block text-xs font-semibold text-on-surface-variant">Tulis Pesan Kartu Ucapan:</label>
+              <textarea id="giftCardNote" rows="2" placeholder="Contoh: Selamat menikmati pedasnya Sambal by Kazel ya Kak Budi! Sehat dan sukses selalu - Dari sahabatmu." class="w-full p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/60 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+            </div>
+          </div>
+
+          <!-- STEP 4: METODE PEMBAYARAN -->
+          <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/60 p-5 sm:p-6 shadow-sm space-y-4">
+            <div class="flex items-center gap-2 border-b border-outline-variant/40 pb-3">
+              <span class="material-symbols-outlined text-primary text-2xl">account_balance_wallet</span>
+              <h2 class="font-extrabold text-base text-on-surface">3. Metode Pembayaran</h2>
+            </div>
+
+            <div class="space-y-3">
+              <!-- QRIS -->
+              <label class="payment-card flex items-center justify-between p-3.5 rounded-xl border-2 border-primary bg-primary-fixed/20 cursor-pointer transition-all">
+                <div class="flex items-center gap-3">
+                  <input type="radio" name="paymentOption" value="qris" checked onchange="handlePaymentChange('qris', 'QRIS Instant (GoPay/BCA/OVO/ShopeePay)')" class="text-primary focus:ring-primary">
+                  <div>
+                    <div class="font-bold text-xs sm:text-sm text-on-surface flex items-center gap-2">
+                      <span>QRIS Instant All Payment</span>
+                      <span class="text-[10px] bg-green-700 text-white px-2 py-0.5 rounded-full font-bold">Otomatis Terverifikasi</span>
+                    </div>
+                    <div class="text-[11px] text-on-surface-variant">BCA, Mandiri, GoPay, OVO, ShopeePay, DANA (Bebas Biaya Admin)</div>
+                  </div>
+                </div>
+                <span class="material-symbols-outlined text-primary text-xl">qr_code_2</span>
+              </label>
+
+              <!-- Virtual Account -->
+              <label class="payment-card flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/60 bg-surface-container-low cursor-pointer transition-all">
+                <div class="flex items-center gap-3">
+                  <input type="radio" name="paymentOption" value="va" onchange="handlePaymentChange('va', 'Transfer Virtual Account')" class="text-primary focus:ring-primary">
+                  <div>
+                    <div class="font-bold text-xs sm:text-sm text-on-surface">Virtual Account (BCA / Mandiri / BRI)</div>
+                    <div class="text-[11px] text-on-surface-variant">Nomor rekening unik otomatis aktif setelah konfirmasi</div>
+                  </div>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant text-xl">account_balance</span>
+              </label>
+
+              <!-- COD -->
+              <label class="payment-card flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/60 bg-surface-container-low cursor-pointer transition-all">
+                <div class="flex items-center gap-3">
+                  <input type="radio" name="paymentOption" value="cod" onchange="handlePaymentChange('cod', 'Bayar di Tempat (COD)')" class="text-primary focus:ring-primary">
+                  <div>
+                    <div class="font-bold text-xs sm:text-sm text-on-surface">Bayar di Tempat (Cash on Delivery)</div>
+                    <div class="text-[11px] text-on-surface-variant">Bayar tunai ke kurir saat toples sambal tiba di rumah Anda</div>
+                  </div>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant text-xl">payments</span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: STICKY ORDER SUMMARY (5 Cols) -->
+        <div class="lg:col-span-5 space-y-6 sticky top-28">
+          
+          <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/60 p-5 shadow-md space-y-4">
+            <h3 class="font-extrabold text-base text-on-surface border-b border-outline-variant/40 pb-3 flex items-center justify-between">
+              <span>Ringkasan Pesanan</span>
+              <span id="checkoutItemCount" class="text-xs font-semibold text-primary">0 Item</span>
+            </h3>
+
+            <!-- Mini List of Items -->
+            <div id="checkoutMiniList" class="max-h-60 overflow-y-auto divide-y divide-outline-variant/30 space-y-2 pr-1">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- Price Breakdown Calculation -->
+            <div class="border-t border-outline-variant/40 pt-3 space-y-2 text-xs sm:text-sm">
+              <div class="flex justify-between text-on-surface-variant">
+                <span>Subtotal Produk</span>
+                <span id="chkSubtotal" class="font-bold text-on-surface">Rp 0</span>
+              </div>
+
+              <div class="flex justify-between text-on-surface-variant">
+                <span>Ongkos Kirim (<span id="chkCourierLabel">Paxel</span>)</span>
+                <span id="chkShippingFee" class="font-bold text-on-surface">Rp 18.000</span>
+              </div>
+
+              <div class="flex justify-between text-on-surface-variant">
+                <span>Potongan Kupon Promo</span>
+                <span id="chkDiscount" class="font-bold text-green-700">-Rp 0</span>
+              </div>
+
+              <div class="pt-3 border-t border-outline-variant/50 flex items-baseline justify-between">
+                <span class="font-black text-sm sm:text-base text-on-surface">Total Tagihan</span>
+                <div class="text-right">
+                  <span id="chkGrandTotal" class="text-2xl font-black text-primary">Rp 0</span>
+                  <span class="text-[10px] text-on-surface-variant block">Sudah termasuk asuransi & packing aman</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUBMIT BUTTON: BAYAR SEKARANG -->
+            <button type="submit" id="payNowBtn" class="w-full py-4 px-6 rounded-xl bg-primary text-white hover:bg-primary-container font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-xl shadow-primary/30 active:scale-95 transition-all duration-150 tap-target">
+              <span class="material-symbols-outlined text-xl">lock</span>
+              <span>Bayar Sekarang</span>
+            </button>
+
+            <div class="text-center">
+              <p class="text-[11px] text-on-surface-variant">
+                Dengan mengklik "Bayar Sekarang", Anda menyetujui garansi pengiriman aman & kebijakan privasi Sambal by Kazel.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </form>
+
+    </div>
+  </main>
+
+  <!-- Footer Component -->
+  <app-footer></app-footer>
+
+  <!-- Scripts -->
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/pages/checkout.js"></script>
+</body>
+</html>

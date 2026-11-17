@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Katalog Sambal by Kazel - Pedasnya Pas, Rasanya Nagih!</title>
+  <meta name="description" content="Katalog lengkap sambal botol kemasan rumahan Sambal by Kazel. Pedasnya Pas, Rasanya Nagih! Temukan varian Sambal Cumi Asin, Sambal Bawang Juara, Sambal Roa, Sambal Teri, dan Paket Bundling Hemat.">
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  
+  <!-- Google Fonts & Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  
+  <!-- Tailwind CSS via CDN & External Custom Config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/js/tailwind.config.js"></script>
+  
+  <!-- Master Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="bg-background text-on-surface flex flex-col min-h-screen antialiased selection:bg-primary-fixed selection:text-primary">
+
+  <!-- Header Component (Ticker & Navigation) -->
+  <app-header active="katalog"></app-header>
+
+  <!-- MAIN CATALOG CONTENT -->
+  <main class="flex-grow py-6 sm:py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Breadcrumb Navigation -->
+      <nav class="flex items-center gap-2 text-xs font-semibold text-on-surface-variant mb-6">
+        <a href="index.html" class="hover:text-primary transition-colors">Beranda</a>
+        <span class="material-symbols-outlined text-xs">chevron_right</span>
+        <span class="text-primary font-bold">Katalog Lengkap</span>
+      </nav>
+
+      <!-- Page Title & Subtitle -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+          <h1 class="text-2xl sm:text-4xl font-extrabold text-on-surface tracking-tight">Katalog Sambal Nusantara</h1>
+          <p class="text-sm text-on-surface-variant mt-1">7 racikan sambal tradisional asli rempah segar, siap bikin selera makan berlipat ganda.</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative w-full md:w-80">
+          <input type="text" id="searchInput" placeholder="Cari sambal cumi, bawang, roa..." oninput="handleSearch(this.value)" class="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border border-outline-variant/60 rounded-xl text-xs sm:text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary shadow-sm">
+          <span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-xl">search</span>
+        </div>
+      </div>
+
+      <!-- Mobile Filter Trigger Button (md:hidden) -->
+      <div class="md:hidden flex items-center justify-between gap-2 mb-6">
+        <button onclick="toggleMobileFilter(true)" class="flex-1 py-2.5 px-4 bg-surface-container-high rounded-xl text-xs font-bold text-on-surface flex items-center justify-center gap-2 border border-outline-variant/50 tap-target">
+          <span class="material-symbols-outlined text-lg">tune</span>
+          <span>Filter & Kategori</span>
+        </button>
+
+        <select id="mobileSortSelect" onchange="handleSort(this.value)" class="py-2.5 px-3 bg-surface-container-lowest border border-outline-variant/60 rounded-xl text-xs font-bold text-on-surface">
+          <option value="default">Urutan: Rekomendasi</option>
+          <option value="price-asc">Harga: Termurah</option>
+          <option value="price-desc">Harga: Termahal</option>
+          <option value="spice-desc">Paling Pedas</option>
+          <option value="spice-asc">Level Sedang</option>
+        </select>
+      </div>
+
+      <!-- Grid Layout: Sidebar Filter & Products -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+        
+        <!-- DESKTOP SIDEBAR FILTER (Col 3) -->
+        <aside class="hidden md:block md:col-span-3 space-y-6 bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/60 sticky top-28 shadow-sm">
+          <div class="flex items-center justify-between border-b border-outline-variant/40 pb-3">
+            <div class="flex items-center gap-1.5 font-bold text-sm text-on-surface">
+              <span class="material-symbols-outlined text-primary text-xl">tune</span>
+              <span>Filter Produk</span>
+            </div>
+            <button onclick="resetFilters()" class="text-xs text-primary font-semibold hover:underline">Reset</button>
+          </div>
+
+          <!-- Kategori Filter -->
+          <div>
+            <h4 class="text-xs font-extrabold uppercase tracking-wider text-on-surface-variant mb-3">Kategori</h4>
+            <div class="space-y-2 text-xs font-medium">
+              <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded-lg hover:bg-surface-container">
+                <input type="radio" name="categoryFilter" value="all" checked onchange="handleCategoryFilter('all')" class="text-primary focus:ring-primary">
+                <span>Semua Varian (7)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded-lg hover:bg-surface-container">
+                <input type="radio" name="categoryFilter" value="seafood" onchange="handleCategoryFilter('seafood')" class="text-primary focus:ring-primary">
+                <span>Seafood Series (2)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded-lg hover:bg-surface-container">
+                <input type="radio" name="categoryFilter" value="bawang" onchange="handleCategoryFilter('bawang')" class="text-primary focus:ring-primary">
+                <span>Seri Bawang (1)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded-lg hover:bg-surface-container">
+                <input type="radio" name="categoryFilter" value="daerah" onchange="handleCategoryFilter('daerah')" class="text-primary focus:ring-primary">
+                <span>Resep Nusantara (3)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded-lg hover:bg-surface-container">
+                <input type="radio" name="categoryFilter" value="bundling" onchange="handleCategoryFilter('bundling')" class="text-primary focus:ring-primary">
+                <span class="font-bold text-primary flex items-center gap-1">
+                  <span>🔥 Paket Bundling Hemat (1)</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Tingkat Kepedasan Filter -->
+          <div class="border-t border-outline-variant/40 pt-4">
+            <h4 class="text-xs font-extrabold uppercase tracking-wider text-on-surface-variant mb-3">Tingkat Pedas</h4>
+            <div class="space-y-2 text-xs font-medium">
+              <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded-lg hover:bg-surface-container">
+                <input type="radio" name="spiceFilter" value="all" checked onchange="handleSpiceFilter('all')" class="text-primary focus:ring-primary">
+                <span>Semua Tingkat</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded-lg hover:bg-surface-container">
+                <input type="radio" name="spiceFilter" value="2" onchange="handleSpiceFilter('2')" class="text-primary focus:ring-primary">
+                <span class="flex items-center gap-1">Level 2 • Gurih Sedang 🔥🔥</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded-lg hover:bg-surface-container">
+                <input type="radio" name="spiceFilter" value="3" onchange="handleSpiceFilter('3')" class="text-primary focus:ring-primary">
+                <span class="flex items-center gap-1">Level 3 • Pedas Mantap 🔥🔥🔥</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded-lg hover:bg-surface-container">
+                <input type="radio" name="spiceFilter" value="4" onchange="handleSpiceFilter('4')" class="text-primary focus:ring-primary">
+                <span class="flex items-center gap-1">Level 4 • Sangat Pedas 🔥🔥🔥🔥</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Rentang Harga -->
+          <div class="border-t border-outline-variant/40 pt-4">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-xs font-extrabold uppercase tracking-wider text-on-surface-variant">Maksimal Harga</h4>
+              <span id="priceDisplay" class="text-xs font-bold text-primary">Rp 120.000</span>
+            </div>
+            <input type="range" id="priceRangeInput" min="25000" max="120000" step="5000" value="120000" oninput="handlePriceRange(this.value)" class="w-full accent-primary cursor-pointer">
+            <div class="flex justify-between text-[10px] text-on-surface-variant mt-1 font-semibold">
+              <span>Rp 25.000</span>
+              <span>Rp 120.000</span>
+            </div>
+          </div>
+
+          <!-- Promo Highlight Widget -->
+          <div class="p-3.5 rounded-xl bg-primary-fixed/60 border border-primary/20 text-xs">
+            <div class="font-bold text-primary flex items-center gap-1 mb-1">
+              <span class="material-symbols-outlined text-sm">local_shipping</span>
+              <span>Tips Belanja Hemat</span>
+            </div>
+            <p class="text-on-surface-variant text-[11px] leading-relaxed">
+              Belanja min. <strong>Rp 150.000</strong> (sekitar 4-5 jar) otomatis <strong>Bebas Ongkir</strong> ke seluruh Jawa!
+            </p>
+          </div>
+        </aside>
+
+        <!-- PRODUCTS MAIN COLUMN (Col 9) -->
+        <section class="md:col-span-9">
+          
+          <!-- Top Sort & Result Counter (Desktop) -->
+          <div class="hidden md:flex items-center justify-between mb-6 pb-3 border-b border-outline-variant/40">
+            <div id="resultsCount" class="text-xs font-bold text-on-surface-variant">
+              Menampilkan seluruh produk
+            </div>
+
+            <div class="flex items-center gap-2 text-xs font-semibold">
+              <span class="text-on-surface-variant">Urutkan:</span>
+              <select id="desktopSortSelect" onchange="handleSort(this.value)" class="py-1.5 px-3 bg-surface-container-lowest border border-outline-variant/60 rounded-lg text-xs font-bold text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+                <option value="default">Rekomendasi Terpopuler</option>
+                <option value="price-asc">Harga: Termurah</option>
+                <option value="price-desc">Harga: Termahal</option>
+                <option value="spice-desc">Tingkat Pedas: Tertinggi</option>
+                <option value="spice-asc">Tingkat Pedas: Terendah</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Active Filter Tags Display -->
+          <div id="activeFilterTags" class="flex flex-wrap items-center gap-2 mb-4"></div>
+
+          <!-- PROMINENT BUNDLING SPOTLIGHT BANNER -->
+          <div class="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-primary via-primary-container to-secondary text-white shadow-md relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 overflow-hidden flex-shrink-0">
+                <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=300&q=80" alt="Paket Pesta Pedas 3 Jar" onerror="this.src=FALLBACK_IMG; this.removeAttribute('onerror');" class="w-full h-full object-cover">
+              </div>
+              <div>
+                <span class="inline-block px-2.5 py-0.5 rounded-full bg-yellow-400 text-gray-950 text-[10px] font-black uppercase tracking-wider mb-1">🔥 Promo Bundling Hemat 25%</span>
+                <h3 class="text-sm sm:text-base font-extrabold leading-tight">Paket Pesta Pedas 3 Jar (Gift Box Eksklusif)</h3>
+                <p class="text-[11px] sm:text-xs text-white/85 line-clamp-1 mt-0.5">Sambal Cumi Ijo + Bawang Juara + Roa Asap Manado • 3 x 150g</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end flex-shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-white/20">
+              <div class="text-left sm:text-right">
+                <span class="text-[11px] line-through text-white/60 block leading-none">Rp 115.000</span>
+                <span class="text-base sm:text-lg font-black text-yellow-300">Rp 89.000</span>
+              </div>
+              <button onclick="addToCart(PRODUCTS_DATA.find(p => p.id === 'paket-pesta-pedas'), 1)" class="px-4 py-2.5 bg-white text-primary hover:bg-yellow-100 font-extrabold text-xs rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1.5 tap-target">
+                <span class="material-symbols-outlined text-base">shopping_cart</span>
+                <span>+ Beli Paket</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Product Grid List -->
+          <div id="catalogGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamically populated by JS -->
+          </div>
+
+          <!-- Empty State Container -->
+          <div id="emptyCatalogState" class="hidden text-center py-16 bg-surface-container-lowest rounded-2xl border border-outline-variant/40 p-8">
+            <div class="w-16 h-16 mx-auto mb-4 bg-primary-fixed text-primary rounded-full flex items-center justify-center">
+              <span class="material-symbols-outlined text-3xl">search_off</span>
+            </div>
+            <h3 class="text-lg font-bold text-on-surface">Varian Tidak Ditemukan</h3>
+            <p class="text-xs text-on-surface-variant max-w-sm mx-auto mt-1 mb-4">Tidak ada varian sambal yang cocok dengan kriteria pencarian atau filter yang dipilih.</p>
+            <button onclick="resetFilters()" class="px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary-container transition-colors tap-target">
+              Reset Semua Filter
+            </button>
+          </div>
+
+          <!-- Pagination Controls -->
+          <div id="catalogPagination" class="mt-10 flex items-center justify-center"></div>
+
+        </section>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MOBILE FILTER MODAL DRAWER -->
+  <div id="mobileFilterDrawer" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex-col justify-end">
+    <div class="bg-surface-container-lowest rounded-t-3xl max-h-[85vh] overflow-y-auto p-6 space-y-6">
+      
+      <div class="flex items-center justify-between border-b border-outline-variant/40 pb-3">
+        <h3 class="text-base font-extrabold text-on-surface">Filter Katalog</h3>
+        <button onclick="toggleMobileFilter(false)" class="p-1 rounded-full text-on-surface-variant hover:bg-surface-container">
+          <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+      </div>
+
+      <!-- Kategori Mobile -->
+      <div>
+        <h4 class="text-xs font-extrabold uppercase text-on-surface-variant mb-2">Kategori</h4>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <button onclick="applyMobileCategory('all')" class="mobile-cat-btn py-2 px-3 rounded-lg border border-outline-variant font-bold text-center">Semua (7)</button>
+          <button onclick="applyMobileCategory('seafood')" class="mobile-cat-btn py-2 px-3 rounded-lg border border-outline-variant font-bold text-center">Seafood (2)</button>
+          <button onclick="applyMobileCategory('bawang')" class="mobile-cat-btn py-2 px-3 rounded-lg border border-outline-variant font-bold text-center">Bawang (1)</button>
+          <button onclick="applyMobileCategory('daerah')" class="mobile-cat-btn py-2 px-3 rounded-lg border border-outline-variant font-bold text-center">Nusantara (3)</button>
+          <button onclick="applyMobileCategory('bundling')" class="mobile-cat-btn py-2 px-3 rounded-lg border border-primary/50 bg-primary-fixed/30 text-primary font-extrabold text-center col-span-2">🔥 Paket Bundling Hemat (1)</button>
+        </div>
+      </div>
+
+      <!-- Pedas Mobile -->
+      <div>
+        <h4 class="text-xs font-extrabold uppercase text-on-surface-variant mb-2">Level Pedas</h4>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <button onclick="applyMobileSpice('all')" class="mobile-spice-btn py-2 px-3 rounded-lg border border-outline-variant font-bold text-center">Semua Level</button>
+          <button onclick="applyMobileSpice('2')" class="mobile-spice-btn py-2 px-3 rounded-lg border border-outline-variant font-bold text-center">Lvl 2 • Gurih</button>
+          <button onclick="applyMobileSpice('3')" class="mobile-spice-btn py-2 px-3 rounded-lg border border-outline-variant font-bold text-center">Lvl 3 • Mantap</button>
+          <button onclick="applyMobileSpice('4')" class="mobile-spice-btn py-2 px-3 rounded-lg border border-outline-variant font-bold text-center">Lvl 4 • Pedas Pol</button>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="pt-2 flex items-center gap-3">
+        <button onclick="resetFilters(); toggleMobileFilter(false);" class="w-1/3 py-3 border border-outline-variant rounded-xl text-xs font-bold text-on-surface-variant">Reset</button>
+        <button onclick="toggleMobileFilter(false)" class="w-2/3 py-3 bg-primary text-white rounded-xl text-xs font-bold">Terapkan Filter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Component -->
+  <app-footer></app-footer>
+
+  <!-- Scripts -->
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/pages/catalog.js"></script>
+</body>
+</html>

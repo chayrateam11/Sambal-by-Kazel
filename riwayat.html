@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Riwayat Pesanan Saya - Sambal by Kazel</title>
+  <meta name="description" content="Riwayat pesanan kuliner Sambal by Kazel tanpa perlu login. Lacak status pesanan dan pesan kembali varian favorit dalam 1 klik.">
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  
+  <!-- Google Fonts: Plus Jakarta Sans & Material Symbols Outlined -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  
+  <!-- Tailwind CSS via CDN & External Custom Config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/js/tailwind.config.js"></script>
+  
+  <!-- Master Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="bg-background text-on-surface flex flex-col min-h-screen antialiased selection:bg-primary-fixed selection:text-primary">
+
+  <!-- Header Component (Ticker & Navigation) -->
+  <app-header active="pesanan"></app-header>
+
+  <!-- MAIN RIWAYAT CONTENT -->
+  <main class="flex-grow py-6 sm:py-10">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Breadcrumb Navigation -->
+      <nav class="flex items-center gap-2 text-xs font-semibold text-on-surface-variant mb-6">
+        <a href="index.html" class="hover:text-primary transition-colors">Beranda</a>
+        <span class="material-symbols-outlined text-xs">chevron_right</span>
+        <span class="text-primary font-bold">Riwayat Pesanan</span>
+      </nav>
+
+      <!-- Page Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">Riwayat Pesanan Saya</h1>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <a href="katalog.html" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary-container shadow-sm transition-all tap-target">
+            <span class="material-symbols-outlined text-base">add_shopping_cart</span>
+            <span>Belanja Lagi</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Container Riwayat Pesanan -->
+      <div id="ordersContainer" class="space-y-6">
+        <!-- Will be dynamically populated by JS -->
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer Component -->
+  <app-footer></app-footer>
+
+  <!-- Centralized Script -->
+  <script src="assets/js/app.js"></script>
+
+  <!-- Page Specific Logic -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      renderOrderHistory();
+    });
+
+    function renderOrderHistory() {
+      const container = document.getElementById('ordersContainer');
+      if (!container) return;
+
+      const history = getOrderHistory();
+
+      if (!history || history.length === 0) {
+        container.innerHTML = `
+          <div class="bg-surface-container-lowest rounded-3xl p-8 sm:p-12 text-center border border-outline-variant/60 shadow-sm max-w-lg mx-auto">
+            <div class="w-16 h-16 sm:w-20 sm:h-20 bg-primary-fixed/50 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
+              <span class="material-symbols-outlined text-3xl sm:text-4xl">receipt_long</span>
+            </div>
+            <h2 class="text-lg sm:text-xl font-bold text-on-surface mb-2">Belum Ada Riwayat Pesanan</h2>
+            <p class="text-xs sm:text-sm text-on-surface-variant mb-6 leading-relaxed">
+              Anda belum pernah melakukan pemesanan di perangkat ini. Yuk, cobain aneka sambal lezat khas Sambal by Kazel sekarang!
+            </p>
+            <a href="katalog.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-primary hover:bg-primary-container shadow-md shadow-primary/20 transition-all tap-target">
+              <span class="material-symbols-outlined text-lg">restaurant_menu</span>
+              <span>Jelajahi Katalog Sambal</span>
+            </a>
+          </div>
+        `;
+        return;
+      }
+
+      const cardsHtml = history.map((order, idx) => {
+        const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : 'Baru saja';
+
+        const itemsHtml = order.items.map(item => `
+          <div class="flex items-center gap-3 py-2 border-b border-outline-variant/30 last:border-b-0">
+            <div class="w-12 h-12 rounded-xl overflow-hidden bg-surface-container flex-shrink-0">
+              <img src="${item.image || FALLBACK_IMG}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover" onerror="this.src=FALLBACK_IMG; this.removeAttribute('onerror');">
+            </div>
+            <div class="flex-1 min-w-0">
+              <h4 class="text-xs sm:text-sm font-bold text-on-surface truncate">${escapeHtml(item.name)}</h4>
+              <p class="text-[11px] text-on-surface-variant">${escapeHtml(item.size)} • Level ${item.spiceLevel || 3}</p>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <span class="text-xs font-bold text-on-surface">${formatRupiah(item.price * item.qty)}</span>
+              <span class="text-[11px] text-on-surface-variant block">x${item.qty}</span>
+            </div>
+          </div>
+        `).join('');
+
+        return `
+          <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/60 shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+            
+            <!-- Order Card Header -->
+            <div class="p-4 sm:p-5 bg-surface-container-low/50 border-b border-outline-variant/40 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-primary-fixed/60 flex items-center justify-center text-primary">
+                  <span class="material-symbols-outlined text-xl">inventory_2</span>
+                </div>
+                <div>
+                  <span class="text-xs font-extrabold text-on-surface tracking-wide block">${escapeHtml(order.invoiceNumber)}</span>
+                  <span class="text-[11px] text-on-surface-variant">${orderDate}</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 bg-amber-50 text-amber-800 rounded-full border border-amber-200">
+                  <span class="material-symbols-outlined text-xs">sync</span> Dalam Pengiriman
+                </span>
+                <span class="inline-flex items-center text-[11px] font-semibold px-2.5 py-1 bg-surface-container rounded-full text-on-surface-variant">
+                  ${escapeHtml(order.courierName || 'Paxel')}
+                </span>
+              </div>
+            </div>
+
+            <!-- Order Items List -->
+            <div class="p-4 sm:p-5">
+              <div class="divide-y divide-outline-variant/20 mb-4">
+                ${itemsHtml}
+              </div>
+
+              <!-- Price Breakdown & Actions -->
+              <div class="pt-4 border-t border-outline-variant/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <span class="text-[11px] text-on-surface-variant uppercase tracking-wider font-semibold block">Total Pesanan</span>
+                  <span class="text-base sm:text-lg font-black text-primary">${formatRupiah(order.grandTotal)}</span>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                  <!-- Tombol Lacak Pesanan -->
+                  <a href="status.html?id=${encodeURIComponent(order.invoiceNumber)}" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-on-surface bg-surface-container hover:bg-surface-container-high border border-outline-variant/60 transition-all tap-target">
+                    <span class="material-symbols-outlined text-base">visibility</span>
+                    <span>Detail / Lacak</span>
+                  </a>
+
+                  <!-- Tombol Pesan Lagi / Reorder 1-Klik -->
+                  <button onclick="reorder('${escapeHtml(order.invoiceNumber)}')" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary-container shadow-sm transition-all tap-target">
+                    <span class="material-symbols-outlined text-base">repeat</span>
+                    <span>Pesan Lagi</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = cardsHtml;
+    }
+  </script>
+</body>
+</html>
