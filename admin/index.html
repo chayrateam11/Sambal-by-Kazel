@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Admin - Sambal by Kazel</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="/assets/images/logo.png">
+
+  <!-- Google Fonts: Plus Jakarta Sans & Material Symbols Outlined -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS via CDN & External Custom Config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/assets/js/tailwind.config.js"></script>
+
+  <!-- Chart.js via CDN for Admin Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Global Custom Styles -->
+  <link rel="stylesheet" href="/assets/css/style.css">
+
+  <style>
+    @page {
+      size: auto;
+      margin: 8mm 10mm;
+    }
+    @media print {
+      html, body {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: auto !important;
+        box-shadow: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      #adminPinModal,
+      #dashboardContent,
+      #orderDetailModal,
+      #proofPreviewModal,
+      #toastContainer,
+      .print\:hidden {
+        display: none !important;
+      }
+      #adminPrintableSlip {
+        display: block !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        width: 100% !important;
+        max-width: 520px !important;
+        margin: 0 auto !important;
+        padding: 14px !important;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- ======================================================================== -->
+  <!-- 1. MODAL / LAYAR KUNCI PIN ADMIN (SECURITY LOCK SCREEN) -->
+  <!-- ======================================================================== -->
+  <div id="adminPinModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-surface-container-lowest rounded-3xl p-6 sm:p-8 shadow-2xl border border-outline-variant/50 text-center relative overflow-hidden">
+      
+      <!-- Top Decorative Accent -->
+      <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary via-secondary to-primary"></div>
+
+      <!-- Brand Logo -->
+      <div class="flex justify-center mb-4 pt-2">
+        <img src="/assets/images/logo.png" alt="Sambal by Kazel" class="h-16 sm:h-20 w-auto object-contain mix-blend-multiply">
+      </div>
+
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary-fixed/60 text-primary border border-primary/20 mb-3">
+        <span class="material-symbols-outlined text-sm">lock</span>
+        <span>Akses Terbatas Administrator</span>
+      </div>
+
+      <h1 class="text-xl sm:text-2xl font-black text-on-surface tracking-tight mb-1.5">
+        Portal Masuk Dapur
+      </h1>
+      <p class="text-xs sm:text-sm text-on-surface-variant max-w-xs mx-auto mb-6">
+        Masukkan 6 digit PIN keamanan untuk mengelola pesanan & status pengiriman.
+      </p>
+
+      <!-- 6 Digit PIN Boxes -->
+      <div id="pinInputContainer" class="flex items-center justify-center gap-2 sm:gap-3 mb-4">
+        <input type="password" maxlength="1" inputmode="numeric" class="pin-digit-input w-11 h-13 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-black rounded-xl border-2 border-outline-variant/60 bg-surface-container-low text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all shadow-inner" autofocus autocomplete="off">
+        <input type="password" maxlength="1" inputmode="numeric" class="pin-digit-input w-11 h-13 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-black rounded-xl border-2 border-outline-variant/60 bg-surface-container-low text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all shadow-inner" autocomplete="off">
+        <input type="password" maxlength="1" inputmode="numeric" class="pin-digit-input w-11 h-13 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-black rounded-xl border-2 border-outline-variant/60 bg-surface-container-low text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all shadow-inner" autocomplete="off">
+        <input type="password" maxlength="1" inputmode="numeric" class="pin-digit-input w-11 h-13 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-black rounded-xl border-2 border-outline-variant/60 bg-surface-container-low text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all shadow-inner" autocomplete="off">
+        <input type="password" maxlength="1" inputmode="numeric" class="pin-digit-input w-11 h-13 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-black rounded-xl border-2 border-outline-variant/60 bg-surface-container-low text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all shadow-inner" autocomplete="off">
+        <input type="password" maxlength="1" inputmode="numeric" class="pin-digit-input w-11 h-13 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-black rounded-xl border-2 border-outline-variant/60 bg-surface-container-low text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all shadow-inner" autocomplete="off">
+      </div>
+
+      <!-- Error Message (Hapus class flex awal untuk mencegah display conflict Tailwind) -->
+      <div id="pinErrorMessage" class="hidden text-xs font-bold text-primary mb-3 items-center justify-center gap-1">
+        <span class="material-symbols-outlined text-sm">error</span>
+        <span>PIN tidak cocok. Silakan coba lagi.</span>
+      </div>
+
+      <!-- Touch Keypad (0-9) untuk Kemudahan di Tablet / HP -->
+      <div class="grid grid-cols-3 gap-2 max-w-xs mx-auto mb-4">
+        <button type="button" data-keypad-val="1" class="py-2.5 rounded-xl font-bold text-base bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all">1</button>
+        <button type="button" data-keypad-val="2" class="py-2.5 rounded-xl font-bold text-base bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all">2</button>
+        <button type="button" data-keypad-val="3" class="py-2.5 rounded-xl font-bold text-base bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all">3</button>
+        <button type="button" data-keypad-val="4" class="py-2.5 rounded-xl font-bold text-base bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all">4</button>
+        <button type="button" data-keypad-val="5" class="py-2.5 rounded-xl font-bold text-base bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all">5</button>
+        <button type="button" data-keypad-val="6" class="py-2.5 rounded-xl font-bold text-base bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all">6</button>
+        <button type="button" data-keypad-val="7" class="py-2.5 rounded-xl font-bold text-base bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all">7</button>
+        <button type="button" data-keypad-val="8" class="py-2.5 rounded-xl font-bold text-base bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all">8</button>
+        <button type="button" data-keypad-val="9" class="py-2.5 rounded-xl font-bold text-base bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all">9</button>
+        <button type="button" data-keypad-val="clear" class="py-2.5 rounded-xl font-bold text-xs text-on-surface-variant bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all">CLEAR</button>
+        <button type="button" data-keypad-val="0" class="py-2.5 rounded-xl font-bold text-base bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all">0</button>
+        <button type="button" data-keypad-val="backspace" class="py-2.5 rounded-xl font-bold text-base bg-surface-container hover:bg-surface-container-high active:scale-95 transition-all flex items-center justify-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-lg">backspace</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================== -->
+  <!-- 2. KONTEN DASHBOARD UTAMA (TERKUNCI HINGGA LOGIN) -->
+  <!-- ======================================================================== -->
+  <div id="dashboardContent" class="hidden flex-1 flex-col relative">
+
+    <!-- ==================================================================== -->
+    <!-- LEFT SIDEBAR DRAWER (SLIDE-OVER MENU) -->
+    <!-- ==================================================================== -->
+    <!-- Backdrop Gelap Transparan -->
+    <div id="adminDrawerBackdrop" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden transition-opacity duration-300" onclick="toggleAdminDrawer(false)"></div>
+
+    <!-- Drawer Panel Kiri -->
+    <aside id="adminDrawerPanel" class="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-[#FEF9F3] border-r border-[#E6D2BC] shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+      <!-- Header Sidebar -->
+      <div class="p-4 sm:p-5 border-b border-[#E6D2BC] flex items-center justify-between gap-3 bg-[#F2E4D5]/50">
+        <div class="flex items-center gap-2.5">
+          <img src="/assets/images/logo.png" alt="Sambal by Kazel" class="h-10 w-auto object-contain mix-blend-multiply">
+          <div>
+            <div class="font-extrabold text-sm text-[#5E361B] leading-tight">Sambal by Kazel</div>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-[#7C4A27] text-white">
+              Panel Admin
+            </span>
+          </div>
+        </div>
+        <button type="button" onclick="toggleAdminDrawer(false)" class="p-1.5 text-on-surface-variant hover:text-[#7C4A27] hover:bg-[#F2E4D5] rounded-xl transition-colors" aria-label="Tutup Menu">
+          <span class="material-symbols-outlined text-2xl">close</span>
+        </button>
+      </div>
+
+      <!-- Menu Navigasi & Aksi Cepat -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-6">
+        <!-- Kategori Menu Utama -->
+        <div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-[#7C4A27]/70 px-2 block mb-2">Navigasi Halaman</span>
+          <nav class="space-y-1.5">
+            <!-- Menu 1: Daftar Pesanan -->
+            <button type="button" id="drawerTabOrders" onclick="handleDrawerNav('orders')" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all bg-[#7C4A27] text-white shadow-xs">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-lg">receipt_long</span>
+                <span>Daftar Pesanan</span>
+              </div>
+              <span id="drawerBadgeOrders" class="px-2 py-0.5 rounded-full text-[11px] bg-white/20 font-black">0</span>
+            </button>
+
+            <!-- Menu 2: Laporan & Grafik Penjualan -->
+            <button type="button" id="drawerTabAnalytics" onclick="handleDrawerNav('analytics')" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all text-[#5E361B] hover:bg-[#F2E4D5]/70">
+              <span class="material-symbols-outlined text-lg">insights</span>
+              <span>Laporan & Grafik Penjualan</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- Garis Pemisah & Aksi Cepat -->
+        <div class="pt-4 border-t border-[#E6D2BC]">
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-[#7C4A27]/70 px-2 block mb-2">Aksi Cepat</span>
+          <nav class="space-y-1.5">
+            <!-- Aksi 3: Buka Google Sheets Database -->
+            <button type="button" onclick="handleDrawerOpenGoogleSheets()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold text-[#5E361B] hover:bg-[#F2E4D5]/70 transition-all text-left group">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-lg text-emerald-700">table_view</span>
+                <span>Buka Google Sheets</span>
+              </div>
+              <span class="material-symbols-outlined text-sm text-on-surface-variant group-hover:text-[#5E361B]">open_in_new</span>
+            </button>
+
+            <!-- Aksi 4: Lihat Toko Utama -->
+            <a href="/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold text-[#5E361B] hover:bg-[#F2E4D5]/70 transition-all">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-lg text-secondary">storefront</span>
+                <span>Lihat Toko Utama</span>
+              </div>
+              <span class="material-symbols-outlined text-sm text-on-surface-variant">open_in_new</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Footer Sidebar: Status & Logout -->
+      <div class="p-4 border-t border-[#E6D2BC] bg-[#F2E4D5]/30 flex items-center justify-between text-xs text-on-surface-variant">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-green-600"></span>
+          <span class="font-bold text-[#5E361B]">Admin Kazel Online</span>
+        </div>
+        <button type="button" onclick="adminLogout()" class="text-xs font-bold text-primary hover:underline">
+          Keluar
+        </button>
+      </div>
+    </aside>
+
+    <!-- TOP ADMIN HEADER BAR -->
+    <header class="sticky top-0 z-30 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/40 shadow-xs">
+      <div class="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3">
+        
+        <!-- Sisi Kiri: Hamburger Button + Brand Logo -->
+        <div class="flex items-center gap-2.5 sm:gap-3.5">
+          <!-- Tombol Hamburger (☰) -->
+          <button type="button" onclick="toggleAdminDrawer(true)" class="p-2 rounded-xl text-[#7C4A27] bg-[#F2E4D5] hover:bg-[#E6D2BC] active:scale-95 transition-all flex items-center justify-center shrink-0 shadow-2xs" title="Buka Menu Navigasi" aria-label="Buka Menu Navigasi">
+            <span class="material-symbols-outlined text-2xl">menu</span>
+          </button>
+
+          <!-- Logo Brand -->
+          <a href="/admin" class="flex items-center shrink-0" aria-label="Dashboard Admin Sambal by Kazel">
+            <img src="/assets/images/logo.png" alt="Sambal by Kazel" class="h-10 sm:h-12 w-auto object-contain mix-blend-multiply">
+          </a>
+        </div>
+
+        <!-- Sisi Kanan: Realtime Sync, Muat Ulang, & Keluar -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          
+          <!-- Indikator Koneksi Google Sheets -->
+          <div id="connectionStatusBadge">
+            <span class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-green-100 text-green-800 border border-green-200">
+              <span class="w-2 h-2 rounded-full bg-green-600 animate-pulse"></span>
+              <span class="hidden sm:inline">Google Sheets </span><span>Terhubung</span>
+            </span>
+          </div>
+
+          <!-- Tombol Refresh Data -->
+          <button id="adminRefreshBtn" class="p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold text-on-surface bg-surface-container hover:bg-surface-container-high border border-outline-variant/50 transition-colors flex items-center gap-1.5" title="Sinkronkan Ulang Data">
+            <span class="material-symbols-outlined text-base">refresh</span>
+            <span class="hidden sm:inline">Muat Ulang</span>
+          </button>
+
+          <!-- Tombol Logout -->
+          <button onclick="adminLogout()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold text-primary bg-primary-fixed/50 hover:bg-primary-fixed border border-primary/20 transition-colors flex items-center gap-1.5" title="Kunci Dashboard (Logout)">
+            <span class="material-symbols-outlined text-base">logout</span>
+            <span class="hidden sm:inline">Keluar</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN DASHBOARD BODY -->
+    <main class="flex-1 max-w-7xl 2xl:max-w-screen-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+      <!-- 4 KARTU STATISTIK RINGKASAN ATAS -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        
+        <!-- Kartu 1: Total Pesanan -->
+        <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/40 shadow-xs flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Total Pesanan</span>
+            <div id="statTotalOrders" class="text-2xl sm:text-3xl font-black text-on-surface mt-1">0</div>
+            <span class="text-[11px] text-on-surface-variant">Akumulasi seluruh pesanan</span>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-primary-fixed/60 text-primary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">receipt_long</span>
+          </div>
+        </div>
+
+        <!-- Kartu 2: Total Omzet Penjualan -->
+        <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/40 shadow-xs flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Total Omzet</span>
+            <div id="statTotalRevenue" class="text-2xl sm:text-3xl font-black text-primary mt-1">Rp 0</div>
+            <span class="text-[11px] text-green-700 font-semibold">Gross sales tercatat</span>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-green-100 text-green-700 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">payments</span>
+          </div>
+        </div>
+
+        <!-- Kartu 3: Pesanan Perlu Diproses -->
+        <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/40 shadow-xs flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Perlu Diproses</span>
+            <div id="statNeedProcess" class="text-2xl sm:text-3xl font-black text-amber-600 mt-1">0</div>
+            <span class="text-[11px] text-amber-700 font-semibold">Menunggu / Dapur Kazel</span>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">skillet</span>
+          </div>
+        </div>
+
+        <!-- Kartu 4: Pesanan Selesai -->
+        <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/40 shadow-xs flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Pesanan Selesai</span>
+            <div id="statCompleted" class="text-2xl sm:text-3xl font-black text-green-600 mt-1">0</div>
+            <span class="text-[11px] text-on-surface-variant">Terkirim & Berhasil</span>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-green-100 text-green-700 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">check_circle</span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ==================================================================== -->
+      <!-- TAB 1: DAFTAR PESANAN & OPERASIONAL DAPUR (DEFAULT) -->
+      <!-- ==================================================================== -->
+      <div id="adminTabOrders" class="space-y-6">
+
+        <!-- REKAP PRODUKSI DAPUR (Otomatis Muncul Saat Filter 'Diproses di Dapur' atau 'Semua Status' Aktif) -->
+        <div id="kitchenProductionSummary" class="hidden bg-[#F2E4D5]/70 border border-[#E6D2BC] p-4 sm:p-5 rounded-2xl shadow-xs transition-all">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-[#7C4A27] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                <span class="material-symbols-outlined text-lg">skillet</span>
+              </div>
+              <div>
+                <h3 class="text-xs sm:text-sm font-black text-[#5E361B] uppercase tracking-wide">Rekap Produksi Dapur</h3>
+                <p id="kitchenSummarySubtitle" class="text-[11px] text-[#7C4A27] font-semibold">Total porsi/botol yang perlu dimasak untuk pesanan berstatus 'Diproses'</p>
+              </div>
+            </div>
+            <span id="kitchenTotalBottlesBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#7C4A27] text-white shadow-2xs self-start sm:self-auto">
+              0 Botol Perlu Disiapkan
+            </span>
+          </div>
+          <div id="kitchenItemsGrid" class="flex flex-wrap gap-2 pt-1">
+            <!-- Rendered dynamically by admin.js -->
+          </div>
+        </div>
+
+        <!-- TOOLBAR FILTER & PENCARIAN -->
+        <section class="bg-surface-container-lowest p-4 sm:p-5 rounded-2xl border border-outline-variant/40 shadow-xs space-y-4">
+          
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            
+            <!-- Search Bar -->
+            <div class="relative flex-1 max-w-md">
+              <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
+              <input type="text" id="adminSearchInput" placeholder="Cari no. invoice, nama pemesan, nomor WA, atau item..." class="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm bg-surface-container-low border border-outline-variant/60 focus:bg-surface-container-lowest focus:border-primary focus:ring-2 focus:ring-primary/20 text-on-surface placeholder:text-on-surface-variant transition-all">
+            </div>
+
+            <!-- Sort Select & Label -->
+            <div class="flex items-center gap-3">
+              <span id="adminOrderCountLabel" class="text-xs font-semibold text-on-surface-variant whitespace-nowrap">
+                Menampilkan 0 pesanan
+              </span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-xs font-semibold text-on-surface-variant">Urutkan:</span>
+                <select id="adminSortSelect" class="text-xs font-bold rounded-xl border border-outline-variant/60 py-2 pl-3 pr-8 bg-surface-container-low text-on-surface focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                  <option value="desc">Waktu Terbaru</option>
+                  <option value="asc">Waktu Terlama</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Status Pills (Horizontal Scroll on Mobile) -->
+          <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <button type="button" data-filter="all" class="px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap bg-primary text-white shadow-xs transition-all flex items-center gap-1.5">
+              <span>Semua Status</span>
+              <span class="filter-count bg-white/20 text-white text-[11px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+            </button>
+
+            <button type="button" data-filter="Menunggu Pembayaran" class="px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap bg-surface-container-lowest text-on-surface-variant hover:text-amber-800 hover:bg-amber-50 transition-all flex items-center gap-1.5 border border-outline-variant/50">
+              <span>💳 Menunggu Pembayaran</span>
+              <span class="filter-count bg-amber-100 text-amber-800 text-[11px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+            </button>
+
+            <button type="button" data-filter="Menunggu Verifikasi" class="px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap bg-surface-container-lowest text-on-surface-variant hover:text-orange-800 hover:bg-orange-50 transition-all flex items-center gap-1.5 border border-outline-variant/50">
+              <span>🔍 Menunggu Verifikasi</span>
+              <span class="filter-count bg-orange-100 text-orange-800 text-[11px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+            </button>
+
+            <button type="button" data-filter="Diproses" class="px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap bg-surface-container-lowest text-on-surface-variant hover:text-amber-900 hover:bg-amber-50 transition-all flex items-center gap-1.5 border border-outline-variant/50">
+              <span>🍳 Diproses di Dapur</span>
+              <span class="filter-count bg-amber-100 text-amber-900 text-[11px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+            </button>
+
+            <button type="button" data-filter="Dikirim" class="px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap bg-surface-container-lowest text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all flex items-center gap-1.5 border border-outline-variant/50">
+              <span>🚚 Dikirim Kurir</span>
+              <span class="filter-count bg-primary-fixed text-primary text-[11px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+            </button>
+
+            <button type="button" data-filter="Selesai" class="px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap bg-surface-container-lowest text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all flex items-center gap-1.5 border border-outline-variant/50">
+              <span>✅ Selesai</span>
+              <span class="filter-count bg-green-100 text-green-800 text-[11px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+            </button>
+          </div>
+
+        </section>
+
+        <!-- TABEL DAFTAR PESANAN REAL-TIME -->
+        <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[960px] xl:min-w-0 xl:w-full">
+              <thead>
+                <tr class="bg-surface-container text-on-surface-variant text-[11px] sm:text-xs font-bold uppercase tracking-wider border-b border-outline-variant/40">
+                  <th class="py-3 px-3 whitespace-nowrap w-[100px]">Waktu</th>
+                  <th class="py-3 px-3 whitespace-nowrap w-[115px]">Invoice</th>
+                  <th class="py-3 px-3 min-w-[130px]">Pelanggan & WA</th>
+                  <th class="py-3 px-3 min-w-[150px]">Menu Dipesan</th>
+                  <th class="py-3 px-3 min-w-[130px]">Alamat & Kurir</th>
+                  <th class="py-3 px-3 whitespace-nowrap w-[185px]">No. Resi</th>
+                  <th class="py-3 px-3 whitespace-nowrap w-[115px]">Total Bayar</th>
+                  <th class="py-3 px-3 whitespace-nowrap text-right min-w-[175px]">Status & Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="adminOrdersTableBody">
+                <!-- Rendered dynamically by /assets/js/pages/admin.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State jika pencarian tidak ditemukan -->
+          <div id="adminEmptyState" class="hidden py-16 px-4 text-center">
+            <div class="w-16 h-16 rounded-full bg-surface-container mx-auto flex items-center justify-center text-on-surface-variant mb-3">
+              <span class="material-symbols-outlined text-3xl">inbox</span>
+            </div>
+            <h3 class="font-extrabold text-base text-on-surface mb-1">Tidak Ada Pesanan Ditemukan</h3>
+            <p class="text-xs sm:text-sm text-on-surface-variant max-w-sm mx-auto">
+              Coba ubah kata kunci pencarian atau ganti filter status di toolbar atas.
+            </p>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ==================================================================== -->
+      <!-- TAB 2: LAPORAN & GRAFIK PENJUALAN (CHART.JS ANALYTICS) -->
+      <!-- ==================================================================== -->
+      <div id="adminTabAnalytics" class="hidden space-y-6">
+
+        <!-- ANALYTICS TOOLBAR & PERIOD FILTER -->
+        <div class="bg-surface-container-lowest p-4 sm:p-5 rounded-2xl border border-outline-variant/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary">analytics</span>
+              <span>Laporan & Analitik Penjualan</span>
+            </h2>
+            <p class="text-xs text-on-surface-variant mt-0.5">Ringkasan performa omzet dan pergerakan transaksi pesanan</p>
+          </div>
+
+          <!-- Quick Period Filter Pills -->
+          <div class="inline-flex items-center gap-1.5 p-1 rounded-xl bg-surface-container-low border border-outline-variant/40 overflow-x-auto text-xs">
+            <button type="button" data-analytics-period="7days" onclick="setAnalyticsPeriod('7days')" class="analytics-period-btn px-3.5 py-1.5 rounded-lg font-bold transition-all bg-[#7C4A27] text-white shadow-2xs whitespace-nowrap">
+              7 Hari Terakhir
+            </button>
+            <button type="button" data-analytics-period="30days" onclick="setAnalyticsPeriod('30days')" class="analytics-period-btn px-3.5 py-1.5 rounded-lg font-bold transition-all text-on-surface-variant hover:text-on-surface hover:bg-surface-container whitespace-nowrap">
+              30 Hari Terakhir
+            </button>
+            <button type="button" data-analytics-period="thisMonth" onclick="setAnalyticsPeriod('thisMonth')" class="analytics-period-btn px-3.5 py-1.5 rounded-lg font-bold transition-all text-on-surface-variant hover:text-on-surface hover:bg-surface-container whitespace-nowrap">
+              Bulan Ini
+            </button>
+            <button type="button" data-analytics-period="all" onclick="setAnalyticsPeriod('all')" class="analytics-period-btn px-3.5 py-1.5 rounded-lg font-bold transition-all text-on-surface-variant hover:text-on-surface hover:bg-surface-container whitespace-nowrap">
+              Semua Waktu
+            </button>
+          </div>
+        </div>
+
+        <!-- RINGKASAN REKAPITULASI ANGKA (4 KARTU) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Card 1: Omzet Kotor -->
+          <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/40 shadow-xs flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Omzet Kotor</span>
+              <div id="analyticsGrossRevenue" class="text-xl sm:text-2xl font-black text-on-surface mt-1">Rp 0</div>
+              <span id="analyticsGrossOrders" class="text-[11px] text-on-surface-variant font-semibold">0 transaksi tercatat</span>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-primary-fixed/60 text-primary flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-xl">account_balance_wallet</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Omzet Bersih (Selesai) -->
+          <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/40 shadow-xs flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Omzet Bersih</span>
+              <div id="analyticsNetRevenue" class="text-xl sm:text-2xl font-black text-green-700 mt-1">Rp 0</div>
+              <span id="analyticsNetOrders" class="text-[11px] text-green-800 font-semibold">Status 'Selesai'</span>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-green-100 text-green-700 flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-xl">verified</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Rata-rata Nilai Belanja (AOV) -->
+          <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/40 shadow-xs flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Rata-rata Belanja (AOV)</span>
+              <div id="analyticsAOV" class="text-xl sm:text-2xl font-black text-amber-800 mt-1">Rp 0</div>
+              <span class="text-[11px] text-on-surface-variant font-semibold">Per transaksi aktif</span>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-xl">trending_up</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Total Botol Terjual -->
+          <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/40 shadow-xs flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Botol Terjual</span>
+              <div id="analyticsTotalBottles" class="text-xl sm:text-2xl font-black text-[#7C4A27] mt-1">0 Botol</div>
+              <span id="analyticsVariantsCount" class="text-[11px] text-on-surface-variant font-semibold">Dari seluruh varian</span>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-[#F2E4D5] text-[#7C4A27] flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-xl">local_mall</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- GRAFIK 1: TREN OMZET & PESANAN (BAR & LINE MIXED) -->
+        <div class="bg-surface-container-lowest p-5 sm:p-6 rounded-2xl border border-outline-variant/40 shadow-xs space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm sm:text-base font-black text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-xl">show_chart</span>
+                <span>Tren Pendapatan & Jumlah Pesanan Harian</span>
+              </h3>
+              <p class="text-xs text-on-surface-variant">Grafik harian omzet (Bar) dan volume transaksi (Line)</p>
+            </div>
+            <div class="flex items-center gap-4 text-xs font-bold text-on-surface-variant">
+              <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-[#7C4A27]"></span> Omzet (Rp)</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#E65100]"></span> Pesanan</span>
+            </div>
+          </div>
+          <div class="relative h-72 sm:h-80 w-full">
+            <canvas id="chartTrendCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- DUA GRAFIK BAWAH: VARIAN TERLARIS & METODE / KURIR -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- GRAFIK 2: VARIAN SAMBAL TERLARIS -->
+          <div class="bg-surface-container-lowest p-5 sm:p-6 rounded-2xl border border-outline-variant/40 shadow-xs space-y-4">
+            <div>
+              <h3 class="text-sm sm:text-base font-black text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-xl">bar_chart</span>
+                <span>Varian Sambal Terlaris</span>
+              </h3>
+              <p class="text-xs text-on-surface-variant">Peringkat varian berdasarkan total botol terjual</p>
+            </div>
+            <div class="relative h-64 sm:h-72 w-full">
+              <canvas id="chartVariantsCanvas"></canvas>
+            </div>
+          </div>
+
+          <!-- GRAFIK 3: KOMPOSISI PEMBAYARAN & KURIR -->
+          <div class="bg-surface-container-lowest p-5 sm:p-6 rounded-2xl border border-outline-variant/40 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm sm:text-base font-black text-on-surface flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary text-xl">pie_chart</span>
+                  <span>Komposisi Transaksi</span>
+                </h3>
+                <p id="compositionSubtitle" class="text-xs text-on-surface-variant">Sebaran metode pembayaran</p>
+              </div>
+              <div class="inline-flex rounded-xl bg-surface-container p-1 text-xs font-bold">
+                <button type="button" id="btnTogglePayKurir_pay" onclick="togglePaymentKurirChart('payment')" class="px-3 py-1 rounded-lg bg-[#7C4A27] text-white transition-all">Pembayaran</button>
+                <button type="button" id="btnTogglePayKurir_kurir" onclick="togglePaymentKurirChart('courier')" class="px-3 py-1 rounded-lg text-on-surface-variant hover:text-on-surface transition-all">Kurir</button>
+              </div>
+            </div>
+            <div class="relative h-64 sm:h-72 w-full flex items-center justify-center">
+              <canvas id="chartCompositionCanvas"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- FOOTER ADMIN SEDERHANA -->
+    <footer class="mt-auto py-6 border-t border-outline-variant/40 bg-surface-container-low/50 text-center text-xs text-on-surface-variant">
+      <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-on-surface">Sambal by Kazel</span>
+          <span>•</span>
+          <span>Admin Kitchen & Shipping Panel</span>
+        </div>
+        <div class="text-[11px] text-on-surface-variant/80">
+          Pedasnya Pas, Rasanya Nagih! © 2026 Sambal by Kazel.
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ======================================================================== -->
+  <!-- 3. MODAL DETAIL PESANAN LENGKAP -->
+  <!-- ======================================================================== -->
+  <div id="orderDetailModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="w-full max-w-2xl bg-surface-container-lowest rounded-3xl p-6 sm:p-7 shadow-2xl border border-outline-variant/50 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-outline-variant/40 mb-4">
+        <h3 class="font-black text-base sm:text-lg text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">receipt_long</span>
+          <span>Detail Lengkap Pesanan</span>
+        </h3>
+        <button onclick="closeOrderDetailModal()" class="p-1.5 text-on-surface-variant hover:text-primary rounded-lg transition-colors" aria-label="Tutup Detail">
+          <span class="material-symbols-outlined text-2xl">close</span>
+        </button>
+      </div>
+
+      <div id="orderDetailContent">
+        <!-- Rendered by openOrderDetailModal() in admin.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================== -->
+  <!-- 4. MODAL PREVIEW BUKTI TRANSFER -->
+  <!-- ======================================================================== -->
+  <div id="proofPreviewModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="w-full max-w-lg bg-surface-container-lowest rounded-3xl p-5 sm:p-6 shadow-2xl border border-outline-variant/50 max-h-[92vh] flex flex-col space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-outline-variant/40">
+        <div>
+          <h3 class="font-black text-base text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">receipt</span>
+            <span>Foto Bukti Transfer Pembeli</span>
+          </h3>
+          <p id="proofModalInvoice" class="text-xs text-on-surface-variant font-mono mt-0.5">#SBK-00000</p>
+        </div>
+        <button onclick="closeProofModal()" class="p-1.5 text-on-surface-variant hover:text-primary rounded-lg transition-colors">
+          <span class="material-symbols-outlined text-2xl">close</span>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-auto flex items-center justify-center bg-black/5 rounded-2xl p-2 border border-outline-variant/30 min-h-[250px] max-h-[60vh]">
+        <img id="proofModalImg" src="" alt="Bukti Transfer" class="max-h-full max-w-full object-contain rounded-lg shadow-sm">
+      </div>
+
+      <div class="flex items-center justify-between gap-3 pt-2">
+        <a id="proofModalNewTabBtn" href="#" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl text-xs font-bold text-on-surface bg-surface-container hover:bg-surface-container-high transition-colors flex items-center gap-1.5">
+          <span>Buka di Tab Baru</span>
+          <span class="material-symbols-outlined text-xs">open_in_new</span>
+        </a>
+
+        <button id="proofModalVerifyBtn" onclick="" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-green-600 hover:bg-green-700 shadow-md shadow-green-600/20 transition-all flex items-center gap-1.5 tap-target">
+          <span class="material-symbols-outlined text-base">check_circle</span>
+          <span>Verifikasi Lunas → Diproses</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================== -->
+  <!-- 5. TEMPLATE CETAK LABEL PENGIRIMAN & SLIP DAPUR (ADMIN PRINT ONLY) -->
+  <!-- ======================================================================== -->
+  <div id="adminPrintableSlip" class="hidden print:block bg-white text-black p-4 max-w-lg mx-auto font-sans text-xs border-2 border-dashed border-gray-400 rounded-lg">
+    
+    <!-- Kop & Header Label -->
+    <div class="flex items-center justify-between pb-3 border-b-2 border-black">
+      <div class="flex items-center gap-2.5">
+        <img src="/assets/images/logo.png" alt="Sambal by Kazel" class="h-10 w-auto object-contain">
+        <div>
+          <span class="font-black text-sm uppercase tracking-tight block text-black">Sambal by Kazel</span>
+          <span class="text-[10px] text-gray-700 block">Dapur Spesialis Sambal Botol Rumahan</span>
+        </div>
+      </div>
+      <div class="text-right">
+        <span class="text-[10px] uppercase font-bold text-gray-600 block">LABEL PENGIRIMAN & PACKING SLIP</span>
+        <span id="slipInvoice" class="font-mono font-black text-sm sm:text-base text-black block">#SBK-00000</span>
+        <span id="slipDate" class="text-[10px] text-gray-600 block">-</span>
+      </div>
+    </div>
+
+    <!-- Banner Ekspedisi & Tagihan Pembayaran -->
+    <div class="grid grid-cols-2 gap-2 my-2.5 p-2 bg-gray-100 border border-gray-300 rounded">
+      <div>
+        <span class="text-[10px] font-bold text-gray-600 uppercase block">Ekspedisi / Kurir:</span>
+        <div id="slipCourier" class="font-black text-sm text-black">-</div>
+        <div class="text-[11px] font-mono font-bold text-gray-800">
+          Resi: <span id="slipResi" class="font-mono font-black">-</span>
+        </div>
+      </div>
+      <div class="text-right flex flex-col justify-center items-end">
+        <span class="text-[10px] font-bold text-gray-600 uppercase block mb-0.5">Metode Bayar & Tagihan:</span>
+        <div id="slipPaymentBadge" class="inline-block font-black text-xs sm:text-sm px-2.5 py-1 rounded bg-black text-white text-center">
+          NON-COD / LUNAS
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Penerima (Teks Besar & Jelas) -->
+    <div class="p-3 border-2 border-black rounded-lg my-2.5 bg-white">
+      <span class="text-[10px] font-black uppercase tracking-wider text-gray-700 block mb-0.5">PENERIMA:</span>
+      <div id="slipReceiverName" class="text-base sm:text-lg font-black text-black leading-tight">-</div>
+      <div id="slipReceiverPhone" class="text-sm font-bold font-mono text-black mt-0.5">-</div>
+      <div id="slipReceiverAddress" class="text-xs sm:text-sm font-semibold text-gray-900 mt-1 leading-snug border-t border-gray-200 pt-1">-</div>
+    </div>
+
+    <!-- Checklist Packing Dapur -->
+    <div class="my-3">
+      <div class="flex items-center justify-between pb-1 mb-1.5 border-b border-black">
+        <span class="font-black text-xs uppercase tracking-wider text-black">CHECKLIST PACKING DAPUR:</span>
+        <span class="text-[10px] font-bold text-gray-600">Pastikan Jar & Seal Rapat</span>
+      </div>
+      <table class="w-full text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-gray-300 text-gray-700 font-bold text-[10px] uppercase">
+            <th class="py-1 text-left w-8">Cek</th>
+            <th class="py-1 text-left">Varian Sambal & Ukuran</th>
+            <th class="py-1 text-right w-14">Qty</th>
+          </tr>
+        </thead>
+        <tbody id="slipItemsList" class="divide-y divide-gray-200">
+          <!-- Rendered dynamically -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Catatan Khusus Dapur (Disorot Tebal) -->
+    <div id="slipKitchenNoteContainer" class="p-2.5 bg-yellow-100 border-2 border-yellow-500 rounded my-2 text-xs">
+      <span class="font-black uppercase tracking-wider text-red-900 block text-[10px]">⚠️ CATATAN KHUSUS DAPUR:</span>
+      <p id="slipKitchenNoteText" class="font-black text-sm text-black mt-0.5 leading-snug">-</p>
+    </div>
+
+    <!-- Footer Slip -->
+    <div class="pt-2 mt-2 border-t border-dashed border-gray-400 flex items-center justify-between text-[10px] text-gray-600">
+      <span>Dipersiapkan oleh: Dapur Sambal by Kazel</span>
+      <span>Simpan di chiller/kulkas setelah tiba</span>
+    </div>
+
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm pointer-events-none"></div>
+
+  <!-- Scripts -->
+  <script src="/assets/js/app.js"></script>
+  <script src="/assets/js/pages/admin.js"></script>
+</body>
+</html>

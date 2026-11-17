@@ -7,7 +7,7 @@ Website e-commerce kuliner modern berstandar tinggi untuk brand **"Sambal by Kaz
 ## 🎨 Arsitektur Visual & Standar UI/UX Pro Max
 
 Proyek ini dirancang berdasarkan prinsip sistem desain kuliner tingkat tinggi:
-- **Appetite-Inducing Warm Palette:** Menggunakan kontras warna merah cabai matang (`#b70011`), jingga rempah (`#a73a00`), dan krem hangat (`#fef9f3`).
+- **Appetite-Inducing Warm Palette:** Menggunakan kontras warna Soft Brown khas Sambal by Kazel (`#7C4A27`), cokelat matang (`#5E361B`), krem hangat (`#FEF9F3`), dan border halus (`#D8BEA2`).
 - **High-Conversion E-Commerce Hierarchy:** Ticker promo berjalan, call-to-action ganda di hero section, filter kategori interaktif, progress bar bebas ongkir, dan ringkasan transaksi transparan.
 - **Micro-Interactions & Tactile Feedback:** Efek tekan tombol `active:scale-95`, transisi hover halus (150–300ms), fallback gambar otomatis jika koneksi lambat, dan animasi toast notifikasi.
 - **Mobile First & Accessibility Compliant:** Tap target minimal 44px di perangkat mobile, rasio kontras teks WCAG 4.5:1, sticky top bar di desktop, dan fixed bottom bar di mobile (`md:hidden`).
@@ -22,25 +22,29 @@ Sambal_by_Kazel/
 ├── katalog.html          # Katalog lengkap (Sidebar filter kategori, pedas, harga, sorting, search, modal drawer mobile)
 ├── produk.html           # Detail produk (Galeri thumbnail, level pedas, pilihan ukuran jar, stepper qty, tabs gizi & ulasan)
 ├── keranjang.html        # Keranjang belanja (Dynamic render localStorage, progress bar gratis ongkir, kupon PEDASHEMAT, add-on)
-├── checkout.html         # Form checkout 4-langkah (Data penerima, ekspedisi Paxel/J&T/Grab, kartu ucapan, pembayaran QRIS/VA/COD)
-├── status.html           # Status & pelacakan pesanan (Timeline pengiriman real-time, invoice acak, tombol WhatsApp CS)
+├── checkout.html         # Form checkout 4-langkah (Data penerima, ekspedisi Paxel/J&T/Grab, kartu ucapan, opsi QRIS/VA/COD)
+├── status.html           # Status & pelacakan pesanan (Timeline pengiriman real-time, instruksi bayar, upload bukti transfer)
+├── riwayat.html          # Riwayat pesanan lokal pembeli (Daftar invoice, status dinamis, pesan ulang 1-klik, auto-sync)
+├── admin/
+│   └── index.html        # Dashboard Admin & Dapur (PIN auth, filter status, update resi, preview bukti transfer, analitik, Google Sheets)
+├── docs/
+│   └── google-apps-script.js # Backend serverless Google Sheets & Drive (Two-Way sync, trigger onEdit, upload bukti transfer)
 ├── assets/
 │   ├── css/
 │   │   └── style.css          # Master stylesheet (Material Symbols, ticker marquee, scrollbar, toast, micro-interactions)
 │   └── js/
-│       ├── tailwind.config.js # Konfigurasi eksternal Tailwind CSS (Palet warna, font, spacing, border-radius)
+│       ├── tailwind.config.js # Konfigurasi eksternal Tailwind CSS (Palet warna Soft Brown, font, spacing, border-radius)
 │       ├── data/
 │       │   └── products.js    # Single source of truth produk, add-on, dan konfigurasi kupon & ongkir
-│       ├── core/
-│       │   ├── cart.js        # State management keranjang belanja, kalkulasi diskon & WhatsApp order generator
-│       │   └── components.js  # Native Web Components (<app-header>, <app-footer>, <app-mobile-nav>)
+│       ├── app.js             # Core app bundle, Web Components, modal, cart state & sync Google Sheets API
 │       └── pages/
 │           ├── home.js        # Logika interaktif Beranda (filter produk & FAQ accordion)
 │           ├── catalog.js     # Logika interaktif Katalog (filter URL, sorting, pencarian & mobile drawer)
 │           ├── product.js     # Logika interaktif Detail Produk (galeri thumbnail, varian ukuran & stepper qty)
 │           ├── cart.js        # Logika interaktif Keranjang (update qty, kupon, add-on & free shipping bar)
-│           ├── checkout.js    # Logika interaktif Checkout (multi-step form, opsi kurir, pembayaran & WhatsApp order)
-│           └── status.js      # Logika interaktif Status Pesanan (timeline pelacakan & invoice rendering)
+│           ├── checkout.js    # Logika interaktif Checkout (multi-step form, COD vs Transfer Bank, sync order)
+│           ├── status.js      # Logika interaktif Status Pesanan (timeline, instruksi rekening, kompresi & upload bukti)
+│           └── admin.js       # Logika interaktif Dashboard Admin (real-time auto sync, modal preview foto bukti, status update)
 └── README.md             # Panduan proyek & petunjuk deploy Cloudflare Pages
 ```
 
@@ -69,10 +73,19 @@ Sambal_by_Kazel/
    - J&T Express Reguler (`Rp 12.000` / *Gratis* jika belanja ≥ Rp 150.000).
    - Grab Instant / Sameday (`Rp 32.000` / *Subsidi Rp 18.000* menjadi Rp 14.000 jika belanja ≥ Rp 150.000).
    - Opsi tambahan Kartu Ucapan Kado Gratis dan Catatan Dapur.
+   - Pilihan metode bayar fleksibel: Transfer Bank / QRIS (dengan upload bukti) dan Cash on Delivery (COD).
 
-4. **Pelacakan & Konfirmasi WhatsApp:**
-   - Halaman status menampilkan nomor invoice acak (misal `#SW-89421`) dan timeline 4 tahap.
-   - Tombol *"Konfirmasi ke CS WhatsApp"* otomatis memformat rekap pesanan ke nomor `+62 812-3456-7890`.
+4. **Instruksi Pembayaran & Upload Bukti Transfer Real-Time (`status.html`):**
+   - Rekening resmi (BCA, Mandiri, BRI) dengan fitur salin nomor rekening 1-klik.
+   - Dropzone unggah screenshot bukti transfer dengan auto-kompresi gambar via HTML5 Canvas (< 500KB).
+   - Unggahan tersimpan otomatis ke folder Google Drive *"Bukti Transfer - Sambal by Kazel"* via serverless Apps Script.
+
+5. **Dashboard Admin & Realtime Two-Way Sync (`admin.html`):**
+   - Keamanan login PIN khusus staf admin/dapur (`PIN: 202688`).
+   - Filter tab pesanan: *Semua*, *💳 Menunggu Pembayaran*, *🔍 Menunggu Verifikasi*, *🍳 Diproses di Dapur*, *🚚 Dikirim Kurir*, dan *✅ Selesai*.
+   - Modal preview foto bukti transfer pembeli dengan tombol verifikasi 1-klik (`Verifikasi Lunas → Diproses`).
+   - Sinkronisasi otomatis dua arah (Two-Way Realtime Polling & event listener) tanpa mengganggu fokus ketik admin.
+   - Integrasi langsung ke database Google Sheets (Buka Google Sheets di tab baru untuk lihat tabel rapi atau unduh .xlsx resmi).
 
 ---
 

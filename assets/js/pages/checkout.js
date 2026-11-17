@@ -12,7 +12,7 @@ function initCheckoutPage() {
   if (!cart || cart.length === 0) {
     showToast('Keranjang Anda kosong! Mengalihkan ke katalog...', 'error');
     setTimeout(() => {
-      window.location.href = 'katalog.html';
+      window.location.href = '/katalog';
     }, 1200);
     return;
   }
@@ -170,9 +170,14 @@ function handleFormSubmit(e) {
 
   const calcs = getCartCalculations(selectedCourier);
 
-  // Generate invoice format #SBK-XXXXX
-  const randomFive = Math.floor(10000 + Math.random() * 90000);
-  const invoiceNum = `#SBK-${randomFive}`;
+  // Generate invoice format #SBK-YYMMDD-XXXX (unik & collision-resistant)
+  const todayStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+  const randomFour = Math.floor(1000 + Math.random() * 9000);
+  const invoiceNum = `#SBK-${todayStr}-${randomFour}`;
+
+  // Bedakan status awal: COD langsung "Diproses" ke dapur, Non-COD "Menunggu Pembayaran"
+  const isCod = selectedPayment === 'cod' || (selectedPaymentName && selectedPaymentName.toLowerCase().includes('cod'));
+  const initialStatus = isCod ? 'Diproses' : 'Menunggu Pembayaran';
 
   // Nomor resi dikosongkan saat baru checkout, akan diisi admin saat pesanan dikirim
   const orderPayload = {
@@ -196,7 +201,8 @@ function handleFormSubmit(e) {
     grandTotal: calcs.grandTotal,
     giftCardNote: giftNote,
     kitchenNote: kitchenNote,
-    status: 'Menunggu Konfirmasi'
+    status: initialStatus,
+    buktiBayar: ''
   };
 
   // Simpan, sync Google Sheets, dan proses checkout via feature flag

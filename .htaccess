@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Pastikan subfolder seperti /admin tetap diarahkan ke index.html di dalamnya
+DirectoryIndex index.html
+
+# Jika URL tanpa .html diminta dan file .html-nya tersedia, tampilkan file tersebut
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.*)$ $1.html [L]

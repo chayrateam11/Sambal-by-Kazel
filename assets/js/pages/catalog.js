@@ -82,22 +82,30 @@ function renderCatalog() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedList = list.slice(startIndex, startIndex + itemsPerPage);
 
-  grid.innerHTML = paginatedList.map(product => `
+  grid.innerHTML = paginatedList.map(product => {
+    const safeName = typeof escapeHtml === 'function' ? escapeHtml(product.name) : product.name;
+    const safeDesc = typeof escapeHtml === 'function' ? escapeHtml(product.description) : product.description;
+    const safeCat = typeof escapeHtml === 'function' ? escapeHtml(product.categoryLabel) : product.categoryLabel;
+    const safeBadge = typeof escapeHtml === 'function' ? escapeHtml(product.badge) : product.badge;
+    const safeSize = typeof escapeHtml === 'function' ? escapeHtml(product.size) : product.size;
+    const safeId = typeof escapeHtml === 'function' ? escapeHtml(product.id) : product.id;
+
+    return `
     <div class="product-card bg-surface-container-lowest rounded-2xl border border-outline-variant/60 overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/40 transition-all duration-300 flex flex-col">
       <!-- Image -->
       <div class="img-fallback-wrapper aspect-square relative">
         <img src="${product.image}" 
-             alt="${product.name}" 
+             alt="${safeName}" 
              onerror="this.src=FALLBACK_IMG; this.removeAttribute('onerror');"
              class="w-full h-full object-cover">
         
         <div class="absolute top-3 left-3 bg-primary text-white text-[11px] font-black px-2.5 py-1 rounded-full shadow-md flex items-center gap-1">
           <span class="material-symbols-outlined text-xs fill">local_fire_department</span>
-          <span>${product.badge}</span>
+          <span>${safeBadge}</span>
         </div>
 
         <div class="absolute bottom-3 left-3 bg-surface-container-lowest/90 backdrop-blur-sm text-on-surface px-2 py-0.5 rounded-md text-[11px] font-bold">
-          ${product.size}
+          ${safeSize}
         </div>
       </div>
 
@@ -105,18 +113,18 @@ function renderCatalog() {
       <div class="p-4 flex-1 flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between text-xs text-on-surface-variant mb-1">
-            <span class="font-bold text-secondary uppercase tracking-wider text-[10px]">${product.categoryLabel}</span>
+            <span class="font-bold text-secondary uppercase tracking-wider text-[10px]">${safeCat}</span>
             <div class="flex items-center gap-1">
               ${renderChiliRating(product.spiceLevel)}
             </div>
           </div>
 
-          <a href="produk.html?id=${product.id}" class="hover:text-primary transition-colors">
-            <h3 class="font-extrabold text-sm sm:text-base text-on-surface line-clamp-1">${product.name}</h3>
+          <a href="/produk?id=${encodeURIComponent(product.id)}" class="hover:text-primary transition-colors">
+            <h3 class="font-extrabold text-sm sm:text-base text-on-surface line-clamp-1">${safeName}</h3>
           </a>
 
           <p class="text-xs text-on-surface-variant line-clamp-2 mt-1 mb-3">
-            ${product.description}
+            ${safeDesc}
           </p>
         </div>
 
@@ -127,10 +135,10 @@ function renderCatalog() {
             <span class="text-base font-extrabold text-primary">${formatRupiah(product.price)}</span>
           </div>
           <div class="flex items-center gap-1.5">
-            <a href="produk.html?id=${product.id}" class="p-2 bg-surface-container hover:bg-surface-container-high text-on-surface-variant rounded-xl transition-colors" title="Lihat Detail">
+            <a href="/produk?id=${encodeURIComponent(product.id)}" class="p-2 bg-surface-container hover:bg-surface-container-high text-on-surface-variant rounded-xl transition-colors" title="Lihat Detail">
               <span class="material-symbols-outlined text-base">visibility</span>
             </a>
-            <button onclick="addToCart(PRODUCTS_DATA.find(p => p.id === '${product.id}'), 1)" class="px-3 py-2 bg-primary text-white hover:bg-primary-container font-bold text-xs rounded-xl transition-all duration-150 flex items-center gap-1 tap-target" title="Tambah ke keranjang">
+            <button onclick="addToCart(PRODUCTS_DATA.find(p => p.id === '${safeId}'), 1)" class="px-3 py-2 bg-primary text-white hover:bg-primary-container font-bold text-xs rounded-xl transition-all duration-150 flex items-center gap-1 tap-target" title="Tambah ke keranjang">
               <span class="material-symbols-outlined text-base">add_shopping_cart</span>
               <span>+ Beli</span>
             </button>
@@ -138,7 +146,8 @@ function renderCatalog() {
         </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   // Render Pagination Controls
   renderPaginationControls(totalPages);

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout Pembayaran - Sambal by Kazel</title>
   <meta name="description" content="Selesaikan pemesanan aneka sambal kemasan Sambal by Kazel dengan pengiriman aman dan metode pembayaran lengkap QRIS, Virtual Account, dan COD.">
-  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link rel="icon" type="image/png" href="/assets/images/logo.png">
   
   <!-- Google Fonts & Material Symbols -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,10 +15,10 @@
   
   <!-- Tailwind CSS via CDN & External Custom Config -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="assets/js/tailwind.config.js"></script>
+  <script src="/assets/js/tailwind.config.js"></script>
   
   <!-- Master Stylesheet -->
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body class="bg-background text-on-surface flex flex-col min-h-screen antialiased selection:bg-primary-fixed selection:text-primary">
 
@@ -210,21 +210,24 @@
                   <div>
                     <div class="font-bold text-xs sm:text-sm text-on-surface flex items-center gap-2">
                       <span>QRIS Instant All Payment</span>
-                      <span class="text-[10px] bg-green-700 text-white px-2 py-0.5 rounded-full font-bold">Otomatis Terverifikasi</span>
+                      <span class="text-[10px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-bold">Perlu Upload Bukti TF</span>
                     </div>
-                    <div class="text-[11px] text-on-surface-variant">BCA, Mandiri, GoPay, OVO, ShopeePay, DANA (Bebas Biaya Admin)</div>
+                    <div class="text-[11px] text-on-surface-variant">BCA, Mandiri, GoPay, OVO, ShopeePay, DANA (Upload bukti transfer setelah checkout)</div>
                   </div>
                 </div>
                 <span class="material-symbols-outlined text-primary text-xl">qr_code_2</span>
               </label>
 
-              <!-- Virtual Account -->
+              <!-- Virtual Account / Transfer Bank -->
               <label class="payment-card flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/60 bg-surface-container-low cursor-pointer transition-all">
                 <div class="flex items-center gap-3">
-                  <input type="radio" name="paymentOption" value="va" onchange="handlePaymentChange('va', 'Transfer Virtual Account')" class="text-primary focus:ring-primary">
+                  <input type="radio" name="paymentOption" value="va" onchange="handlePaymentChange('va', 'Transfer Bank / Virtual Account')" class="text-primary focus:ring-primary">
                   <div>
-                    <div class="font-bold text-xs sm:text-sm text-on-surface">Virtual Account (BCA / Mandiri / BRI)</div>
-                    <div class="text-[11px] text-on-surface-variant">Nomor rekening unik otomatis aktif setelah konfirmasi</div>
+                    <div class="font-bold text-xs sm:text-sm text-on-surface flex items-center gap-2">
+                      <span>Transfer Bank (BCA / Mandiri / BRI)</span>
+                      <span class="text-[10px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-bold">Perlu Upload Bukti TF</span>
+                    </div>
+                    <div class="text-[11px] text-on-surface-variant">Transfer manual ke rekening resmi Kazel & upload bukti pembayaran</div>
                   </div>
                 </div>
                 <span class="material-symbols-outlined text-on-surface-variant text-xl">account_balance</span>
@@ -235,7 +238,10 @@
                 <div class="flex items-center gap-3">
                   <input type="radio" name="paymentOption" value="cod" onchange="handlePaymentChange('cod', 'Bayar di Tempat (COD)')" class="text-primary focus:ring-primary">
                   <div>
-                    <div class="font-bold text-xs sm:text-sm text-on-surface">Bayar di Tempat (Cash on Delivery)</div>
+                    <div class="font-bold text-xs sm:text-sm text-on-surface flex items-center gap-2">
+                      <span>Bayar di Tempat (Cash on Delivery)</span>
+                      <span class="text-[10px] bg-green-700 text-white px-2 py-0.5 rounded-full font-bold">Langsung Diproses</span>
+                    </div>
                     <div class="text-[11px] text-on-surface-variant">Bayar tunai ke kurir saat toples sambal tiba di rumah Anda</div>
                   </div>
                 </div>
@@ -310,7 +316,7 @@
   <app-footer></app-footer>
 
   <!-- Scripts -->
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/pages/checkout.js"></script>
+  <script src="/assets/js/app.js"></script>
+  <script src="/assets/js/pages/checkout.js"></script>
 </body>
 </html>

@@ -185,7 +185,7 @@ function handleAddToCartClick() {
 
 function handleBuyNowClick() {
   handleAddToCartClick();
-  window.location.href = 'keranjang.html';
+  window.location.href = '/keranjang';
 }
 
 function switchProductTab(tabId, btn) {
@@ -220,13 +220,13 @@ function renderRelatedProducts() {
             <span class="text-secondary font-bold">${prod.categoryLabel}</span>
             ${renderChiliRating(prod.spiceLevel)}
           </div>
-          <a href="produk.html?id=${prod.id}" class="hover:text-primary">
+          <a href="/produk?id=${prod.id}" class="hover:text-primary">
             <h4 class="font-extrabold text-sm text-on-surface line-clamp-1">${prod.name}</h4>
           </a>
         </div>
         <div class="pt-2 flex items-center justify-between mt-2">
           <span class="text-sm font-extrabold text-primary">${formatRupiah(prod.price)}</span>
-          <a href="produk.html?id=${prod.id}" class="px-2.5 py-1.5 bg-surface-container hover:bg-primary hover:text-white rounded-lg text-xs font-bold transition-colors">
+          <a href="/produk?id=${prod.id}" class="px-2.5 py-1.5 bg-surface-container hover:bg-primary hover:text-white rounded-lg text-xs font-bold transition-colors">
             Detail
           </a>
         </div>

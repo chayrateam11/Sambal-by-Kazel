@@ -90,7 +90,7 @@ function renderCartPage() {
 
           <div class="text-right min-w-[80px]">
             <span class="text-xs sm:text-sm font-black text-on-surface block">${formatRupiah(safePrice * safeQty)}</span>
-            <button type="button" onclick="handleRemoveItem('${safeCartItemId}')" class="text-[11px] text-red-600 hover:underline">Hapus</button>
+            <button type="button" onclick="handleRemoveItem('${safeCartItemId}')" class="text-[11px] text-primary hover:text-primary-dark hover:underline font-semibold">Hapus</button>
           </div>
         </div>
       </div>
@@ -237,7 +237,7 @@ function handleProceedCheckout() {
     sessionStorage.removeItem('sw_temp_kitchen_note');
   }
 
-  window.location.href = 'checkout.html';
+  window.location.href = '/checkout';
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -18,7 +18,7 @@ html {
 
 body {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  color: #1d1b18;
+  color: #2D1E14;
   background-color: #fef9f3;
   overflow-x: hidden;
 }
@@ -58,12 +58,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #e6bdb8;
+  background: #D8BEA2;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #916f6b;
+  background: #7C4A27;
 }
 
 .scrollbar-none,
@@ -152,7 +152,7 @@ body {
   padding: 12px 18px;
   border-radius: 14px;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
-  border-left: 4px solid #b70011;
+  border-left: 4px solid #7C4A27;
   font-size: 0.875rem;
   font-weight: 500;
   animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -246,4 +246,57 @@ body {
 
 .animate-shake {
   animation: shake 0.5s ease-in-out;
+}
+
+/* 13. Professional Single-Page Printable Invoice Styles */
+@page {
+  size: A4 portrait;
+  margin: 10mm 12mm;
+}
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  app-header,
+  app-footer,
+  header,
+  footer,
+  nav,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  #printableInvoice,
+  #adminPrintableSlip {
+    display: block !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  #printableInvoice *,
+  #adminPrintableSlip * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  tr, td, th {
+    page-break-inside: avoid !important;
+  }
 }

@@ -14,11 +14,14 @@
 // 1. GLOBAL CONFIGURATION & FEATURE FLAGS
 // ============================================================================
 const APP_CONFIG = {
+  ADMIN_PIN: '202688',
   ENABLE_PAYMENT_GATEWAY: false, // Dimatikan sementara hingga API Midtrans/Xendit siap
   PAYMENT_ENDPOINT: '/api/payment',
-  GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycby_b7OMHFSShdlJ_rE3Tq6y7BGNoIEqnKY8nAtfWIe4wh5Mnkf4-SFO0OJc6myuWv9o/exec',
-  WHATSAPP_ADMIN: '6281234567890',
-  ADMIN_PIN: '202688'
+  GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbxYKZ5-5tLuU-rhaTE-1fCUZZoKT8ej9piDrcDP2AWAKucJ617cRSxqnygHGRUX5cfD/exec',
+  // URL Spreadsheet Google Sheets pesanan untuk dibuka langsung oleh Admin/Owner
+  // Ganti link di bawah dengan link URL Google Spreadsheet database toko Anda:
+  GOOGLE_SHEET_SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit', // Fallback otomatis ke Google Drive / Sheets jika belum diatur
+  WHATSAPP_ADMIN: '6281234567890'
 };
 window.APP_CONFIG = APP_CONFIG;
 
@@ -37,7 +40,7 @@ const VALID_COUPONS = {
 };
 
 // Fallback SVG Data URI untuk mengantisipasi gambar eksternal gagal dimuat
-const FALLBACK_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Crect width='600' height='600' fill='%23f2ede7'/%3E%3Ccircle cx='300' cy='280' r='100' fill='%23ffdad6'/%3E%3Cpath d='M300 210 C260 210 240 250 240 290 C240 330 270 350 300 350 C330 350 360 330 360 290 C360 250 340 210 300 210 Z' fill='%23b70011'/%3E%3Cpath d='M300 210 C300 180 320 160 330 150' stroke='%237f4f00' stroke-width='8' stroke-linecap='round' fill='none'/%3E%3Ctext x='50%25' y='72%25' dominant-baseline='middle' text-anchor='middle' font-family='Plus Jakarta Sans, sans-serif' font-size='24' fill='%231d1b18' font-weight='bold'%3ESambal by Kazel%3C/text%3E%3Ctext x='50%25' y='79%25' dominant-baseline='middle' text-anchor='middle' font-family='Plus Jakarta Sans, sans-serif' font-size='15' fill='%23a73a00'%3EPedasnya Pas, Rasanya Nagih!%3C/text%3E%3C/svg%3E";
+const FALLBACK_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Crect width='600' height='600' fill='%23f2ede7'/%3E%3Ccircle cx='300' cy='280' r='100' fill='%23f2e4d5'/%3E%3Cpath d='M300 210 C260 210 240 250 240 290 C240 330 270 350 300 350 C330 350 360 330 360 290 C360 250 340 210 300 210 Z' fill='%237c4a27'/%3E%3Cpath d='M300 210 C300 180 320 160 330 150' stroke='%235e361b' stroke-width='8' stroke-linecap='round' fill='none'/%3E%3Ctext x='50%25' y='72%25' dominant-baseline='middle' text-anchor='middle' font-family='Plus Jakarta Sans, sans-serif' font-size='24' fill='%232d1e14' font-weight='bold'%3ESambal by Kazel%3C/text%3E%3Ctext x='50%25' y='79%25' dominant-baseline='middle' text-anchor='middle' font-family='Plus Jakarta Sans, sans-serif' font-size='15' fill='%237c4a27'%3EPedasnya Pas, Rasanya Nagih!%3C/text%3E%3C/svg%3E";
 
 // ============================================================================
 // 2. SINGLE SOURCE OF TRUTH PRODUCTS DATA
@@ -574,7 +577,7 @@ function reorder(invoiceNumber) {
   showToast(`${order.items.length} varian berhasil dimasukkan ke keranjang!`, 'success');
   
   setTimeout(() => {
-    window.location.href = 'keranjang.html';
+    window.location.href = '/keranjang';
   }, 400);
 }
 
@@ -621,8 +624,25 @@ async function submitOrderToGoogleSheets(orderData) {
 
   try {
     const fullAddress = `${orderData.customerAddress}, ${orderData.customerCity} (${orderData.customerPostal || ''})`;
-    const itemsFormatted = orderData.items.map(i => `${i.name} (${i.size}) x${i.qty}`).join('; ');
+    
+    // Siapkan daftar item dalam format array objek [{ name, qty }] dan string tersusun ke bawah (\n)
+    const itemsArray = Array.isArray(orderData.items)
+      ? orderData.items.map(i => ({
+          name: i.size ? `${i.name} (${i.size})` : (i.name || 'Produk'),
+          qty: i.qty || 1
+        }))
+      : [];
+
+    const itemsFormattedText = itemsArray.length > 0
+      ? itemsArray.map(item => `• ${item.name} (${item.qty}x)`).join('\n')
+      : (typeof orderData.items === 'string' ? orderData.items : '-');
+
     const notesFormatted = [orderData.kitchenNote, orderData.giftCardNote ? `Kado: ${orderData.giftCardNote}` : ''].filter(Boolean).join(' | ');
+
+    // Bedakan status awal COD vs Non-COD
+    const isCod = String(orderData.paymentMethodName || orderData.paymentCode || '').toLowerCase().includes('cod');
+    const orderStatus = orderData.status || (isCod ? 'Diproses' : 'Menunggu Pembayaran');
+    const buktiBayar = orderData.buktiBayar || orderData.paymentProofUrl || '-';
 
     const payload = {
       // Keys Standar & Kompatibel (Mendukung skrip EN & ID)
@@ -634,7 +654,8 @@ async function submitOrderToGoogleSheets(orderData) {
       whatsapp: orderData.customerPhone,
       address: fullAddress,
       alamat: fullAddress,
-      items: itemsFormatted,
+      items: itemsArray.length > 0 ? itemsArray : itemsFormattedText,
+      itemsText: itemsFormattedText,
       totalAmount: orderData.grandTotal,
       total: orderData.grandTotal,
       totalBayar: orderData.grandTotal,
@@ -646,9 +667,11 @@ async function submitOrderToGoogleSheets(orderData) {
       metodeBayar: orderData.paymentMethodName,
       notes: notesFormatted,
       catatan: notesFormatted,
-      status: orderData.status || 'Menunggu Konfirmasi',
+      status: orderStatus,
       trackingNumber: orderData.trackingNumber || '',
       noResi: orderData.noResi || orderData.trackingNumber || '',
+      buktiBayar: buktiBayar,
+      paymentProofUrl: buktiBayar,
       createdAt: orderData.createdAt || new Date().toISOString()
     };
 
@@ -667,6 +690,45 @@ async function submitOrderToGoogleSheets(orderData) {
     return false;
   }
 }
+
+/**
+ * Mengunggah data foto bukti transfer (Base64) ke Google Apps Script (Drive)
+ */
+async function submitPaymentProofToGoogleSheets({ invoice, name, imageBase64 }) {
+  if (!APP_CONFIG.GOOGLE_SHEET_URL) {
+    return { success: false, message: 'Google Sheets URL belum disetel' };
+  }
+
+  try {
+    const payload = {
+      action: 'uploadProof',
+      invoice: invoice,
+      invoiceNumber: invoice,
+      nama: name,
+      customerName: name,
+      image: imageBase64
+    };
+
+    const response = await fetch(APP_CONFIG.GOOGLE_SHEET_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    try {
+      const result = await response.json();
+      return { success: result.status === 'success', data: result };
+    } catch (parseErr) {
+      return { success: true };
+    }
+  } catch (err) {
+    console.error('Error saat upload bukti pembayaran:', err);
+    return { success: false, error: err };
+  }
+}
+window.submitPaymentProofToGoogleSheets = submitPaymentProofToGoogleSheets;
 
 async function processOrderCheckout(orderData) {
   // 1. Simpan order ke localStorage
@@ -697,7 +759,7 @@ async function processOrderCheckout(orderData) {
 
   // 4. Default: Alur WhatsApp & Status Realtime
   const waUrl = generateWhatsAppOrderLink(orderData);
-  window.location.href = `status.html?id=${orderData.invoiceNumber}&autoWa=1`;
+  window.location.href = `/status?id=${encodeURIComponent(orderData.invoiceNumber)}&autoWa=1`;
 }
 
 // ============================================================================
@@ -731,16 +793,23 @@ document.addEventListener('keydown', (e) => {
 // ============================================================================
 class AppHeader extends HTMLElement {
   connectedCallback() {
-    const active = this.getAttribute('active') || '';
+    let active = this.getAttribute('active') || '';
+    if (!active) {
+      const p = (window.location.pathname || '').replace(/\/$/, '') || '/';
+      if (p === '' || p === '/' || p.endsWith('/index')) active = 'beranda';
+      else if (p === '/katalog') active = 'katalog';
+      else if (p === '/riwayat') active = 'pesanan';
+      else if (p.startsWith('/admin')) active = 'admin';
+    }
 
     // Menu Navigasi Lengkap Desktop (Ramping & Proporsional)
     const navItems = [
-      { id: 'beranda', label: 'Beranda', href: 'index.html' },
-      { id: 'katalog', label: 'Katalog Lengkap', href: 'katalog.html' },
-      { id: 'panduan', label: 'Panduan Simpan', href: 'index.html#panduan' },
-      { id: 'ulasan', label: 'Ulasan', href: 'index.html#ulasan' },
-      { id: 'faq', label: 'FAQ', href: 'index.html#faq' },
-      { id: 'pesanan', label: 'Pesanan Saya', href: 'riwayat.html' }
+      { id: 'beranda', label: 'Beranda', href: '/' },
+      { id: 'katalog', label: 'Katalog Lengkap', href: '/katalog' },
+      { id: 'panduan', label: 'Panduan Simpan', href: '/#panduan' },
+      { id: 'ulasan', label: 'Ulasan', href: '/#ulasan' },
+      { id: 'faq', label: 'FAQ', href: '/#faq' },
+      { id: 'pesanan', label: 'Pesanan Saya', href: '/riwayat' }
     ];
 
     const navLinksHtml = navItems.map(item => {
@@ -799,8 +868,8 @@ class AppHeader extends HTMLElement {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pr-6 lg:pr-8 flex items-center justify-between gap-4 py-2.5">
             
           <!-- Brand Logo (shrink-0) -->
-          <a href="index.html" class="flex items-center group focus:outline-none focus:ring-2 focus:ring-primary rounded-xl shrink-0" aria-label="Sambal by Kazel">
-            <img src="assets/images/logo.png" alt="Sambal by Kazel" class="h-14 sm:h-16 lg:h-[72px] w-auto object-contain shrink-0 mix-blend-multiply">
+          <a href="/" class="flex items-center group focus:outline-none focus:ring-2 focus:ring-primary rounded-xl shrink-0" aria-label="Sambal by Kazel">
+            <img src="/assets/images/logo.png" alt="Sambal by Kazel" class="h-14 sm:h-16 lg:h-[72px] w-auto object-contain shrink-0 mix-blend-multiply">
           </a>
 
           <!-- Desktop Navigation Links (hidden lg:flex items-center gap-3.5 xl:gap-6 text-[13px] xl:text-sm font-medium) -->
@@ -810,11 +879,11 @@ class AppHeader extends HTMLElement {
 
           <!-- Desktop Action Buttons (hidden lg:flex items-center gap-2.5 xl:gap-3 shrink-0) -->
           <div class="hidden lg:flex items-center gap-2.5 xl:gap-3 shrink-0">
-            <a href="katalog.html" class="p-2.5 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-colors" title="Cari Sambal">
+            <a href="/katalog" class="p-2.5 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-colors" title="Cari Sambal">
               <span class="material-symbols-outlined text-2xl">search</span>
             </a>
 
-            <a href="keranjang.html" class="relative inline-flex items-center justify-center p-2.5 bg-surface-container hover:bg-primary-fixed/50 text-on-surface rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary tap-target" title="Lihat Keranjang">
+            <a href="/keranjang" class="relative inline-flex items-center justify-center p-2.5 bg-surface-container hover:bg-primary-fixed/50 text-on-surface rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary tap-target" title="Lihat Keranjang">
               <span class="material-symbols-outlined text-2xl text-primary">shopping_bag</span>
               <span class="cart-badge-count hidden absolute -top-1.5 -right-1.5 bg-primary text-white text-[11px] font-bold h-5 min-w-[20px] px-1 rounded-full items-center justify-center shadow-md animate-pulse">0</span>
             </a>
@@ -827,11 +896,11 @@ class AppHeader extends HTMLElement {
 
           <!-- Mobile Action Bar (lg:hidden: search, shopping_bag with badge, hamburger menu) -->
           <div class="flex lg:hidden items-center gap-1 sm:gap-2 shrink-0">
-            <a href="katalog.html" class="p-2 text-on-surface-variant hover:text-primary rounded-xl tap-target flex items-center justify-center" aria-label="Cari Produk">
+            <a href="/katalog" class="p-2 text-on-surface-variant hover:text-primary rounded-xl tap-target flex items-center justify-center" aria-label="Cari Produk">
               <span class="material-symbols-outlined text-2xl">search</span>
             </a>
 
-            <a href="keranjang.html" class="relative p-2 text-on-surface-variant hover:text-primary rounded-xl tap-target flex items-center justify-center" aria-label="Keranjang Belanja">
+            <a href="/keranjang" class="relative p-2 text-on-surface-variant hover:text-primary rounded-xl tap-target flex items-center justify-center" aria-label="Keranjang Belanja">
               <span class="material-symbols-outlined text-2xl text-primary">shopping_bag</span>
               <span class="cart-badge-count hidden absolute top-0.5 right-0.5 bg-primary text-white text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full items-center justify-center shadow">0</span>
             </a>
@@ -851,8 +920,8 @@ class AppHeader extends HTMLElement {
         <div class="p-5">
           <!-- Drawer Header -->
           <div class="flex items-center justify-between pb-4 border-b border-outline-variant/40">
-            <a href="index.html" onclick="toggleMobileDrawer(false)" class="flex items-center shrink-0" aria-label="Sambal by Kazel">
-              <img src="assets/images/logo.png" alt="Sambal by Kazel" class="h-14 sm:h-16 w-auto object-contain shrink-0 mix-blend-multiply">
+            <a href="/" onclick="toggleMobileDrawer(false)" class="flex items-center shrink-0" aria-label="Sambal by Kazel">
+              <img src="/assets/images/logo.png" alt="Sambal by Kazel" class="h-14 sm:h-16 w-auto object-contain shrink-0 mix-blend-multiply">
             </a>
             <button onclick="toggleMobileDrawer(false)" class="p-2 text-on-surface-variant hover:text-primary rounded-lg tap-target flex items-center justify-center" aria-label="Tutup Menu">
               <span class="material-symbols-outlined text-2xl">close</span>
@@ -867,7 +936,7 @@ class AppHeader extends HTMLElement {
 
         <!-- Drawer Footer Actions -->
         <div class="p-5 border-t border-outline-variant/40 space-y-3 bg-surface-container-low/50">
-          <a href="status.html" onclick="toggleMobileDrawer(false)" class="w-full py-3 px-4 rounded-xl font-bold text-xs text-center bg-primary text-white hover:bg-primary-container flex items-center justify-center gap-2 shadow-md tap-target">
+          <a href="/status" onclick="toggleMobileDrawer(false)" class="w-full py-3 px-4 rounded-xl font-bold text-xs text-center bg-primary text-white hover:bg-primary-container flex items-center justify-center gap-2 shadow-md tap-target">
             <span class="material-symbols-outlined text-lg">local_shipping</span>
             <span>Lacak Pesanan Saya</span>
           </a>
@@ -896,8 +965,8 @@ class AppFooter extends HTMLElement {
             
             <!-- Kolom 1 (lg:col-span-4): Logo & Deskripsi Singkat 2 Baris + Badges -->
             <div class="lg:col-span-4 space-y-3.5">
-              <a href="index.html" class="inline-block shrink-0" aria-label="Sambal by Kazel">
-                <img src="assets/images/logo.png" alt="Sambal by Kazel" class="h-20 lg:h-24 w-auto object-contain mix-blend-multiply">
+              <a href="/" class="inline-block shrink-0" aria-label="Sambal by Kazel">
+                <img src="/assets/images/logo.png" alt="Sambal by Kazel" class="h-20 lg:h-24 w-auto object-contain mix-blend-multiply">
               </a>
               
               <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed line-clamp-2 max-w-sm">
@@ -918,10 +987,10 @@ class AppFooter extends HTMLElement {
             <div class="lg:col-span-2">
               <h4 class="font-bold text-xs uppercase tracking-wider text-on-surface mb-3.5">Navigasi</h4>
               <ul class="space-y-2 text-xs sm:text-sm text-on-surface-variant">
-                <li><a href="index.html" class="hover:text-primary transition-colors">Beranda</a></li>
-                <li><a href="katalog.html" class="hover:text-primary transition-colors">Katalog Lengkap</a></li>
-                <li><a href="riwayat.html" class="hover:text-primary transition-colors">Pesanan Saya</a></li>
-                <li><a href="status.html" class="hover:text-primary transition-colors">Lacak Pesanan</a></li>
+                <li><a href="/" class="hover:text-primary transition-colors">Beranda</a></li>
+                <li><a href="/katalog" class="hover:text-primary transition-colors">Katalog Lengkap</a></li>
+                <li><a href="/riwayat" class="hover:text-primary transition-colors">Pesanan Saya</a></li>
+                <li><a href="/status" class="hover:text-primary transition-colors">Lacak Pesanan</a></li>
               </ul>
             </div>
 
@@ -929,17 +998,17 @@ class AppFooter extends HTMLElement {
             <div class="lg:col-span-3">
               <h4 class="font-bold text-xs uppercase tracking-wider text-on-surface mb-3.5">Varian Favorit</h4>
               <ul class="space-y-2 text-xs sm:text-sm text-on-surface-variant">
-                <li><a href="produk.html?id=sambal-cumi-ijo" class="hover:text-primary transition-colors">Sambal Cumi Cabe Ijo</a></li>
-                <li><a href="produk.html?id=sambal-bawang-juara" class="hover:text-primary transition-colors">Sambal Bawang Juara</a></li>
-                <li><a href="produk.html?id=sambal-roa-asap" class="hover:text-primary transition-colors">Sambal Roa Asap Manado</a></li>
-                <li><a href="produk.html?id=paket-pesta-pedas" class="hover:text-primary transition-colors">Paket Pesta Pedas 3 Jar</a></li>
+                <li><a href="/produk?id=sambal-cumi-ijo" class="hover:text-primary transition-colors">Sambal Cumi Cabe Ijo</a></li>
+                <li><a href="/produk?id=sambal-bawang-juara" class="hover:text-primary transition-colors">Sambal Bawang Juara</a></li>
+                <li><a href="/produk?id=sambal-roa-asap" class="hover:text-primary transition-colors">Sambal Roa Asap Manado</a></li>
+                <li><a href="/produk?id=paket-pesta-pedas" class="hover:text-primary transition-colors">Paket Pesta Pedas 3 Jar</a></li>
               </ul>
             </div>
 
             <!-- Kolom 4 (lg:col-span-3): Layanan Pelanggan & WhatsApp Button -->
             <div class="lg:col-span-3">
               <h4 class="font-bold text-xs uppercase tracking-wider text-on-surface mb-3.5">Layanan Pelanggan</h4>
-              <p class="text-xs text-on-surface-variant mb-1 font-medium">Dapur Produksi & Hub: Jakarta & Surabaya</p>
+              <p class="text-xs text-on-surface-variant mb-1 font-medium">Dapur Produksi & Hub: Bogor</p>
               <p class="text-xs text-on-surface-variant mb-3">Senin - Minggu: 08.00 - 20.00 WIB</p>
               <a href="https://wa.me/${APP_CONFIG.WHATSAPP_ADMIN}?text=Halo%20Admin%20Sambal%20by%20Kazel" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-green-600 hover:bg-green-700 transition-colors shadow-sm tap-target">
                 <span class="material-symbols-outlined text-base">chat</span>
@@ -949,14 +1018,9 @@ class AppFooter extends HTMLElement {
 
           </div>
 
-          <!-- Baris Bawah: Copyright Bersih di Kiri & Tautan Bantuan di Kanan -->
-          <div class="pt-6 border-t border-outline-variant/40 flex flex-col sm:flex-row items-center justify-between text-xs text-on-surface-variant gap-3">
+          <!-- Baris Bawah: Hak Cipta di Tengah -->
+          <div class="pt-6 border-t border-outline-variant/40 text-center text-xs text-on-surface-variant">
             <p>© 2026 Sambal by Kazel. Hak Cipta Dilindungi Undang-Undang.</p>
-            <div class="flex items-center space-x-5">
-              <a href="index.html#panduan" class="hover:text-primary transition-colors">Panduan Simpan</a>
-              <a href="index.html#ulasan" class="hover:text-primary transition-colors">Ulasan</a>
-              <a href="index.html#faq" class="hover:text-primary transition-colors">Bantuan FAQ</a>
-            </div>
           </div>
 
         </div>
