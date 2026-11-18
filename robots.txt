@@ -1,0 +1,18 @@
+# robots.txt for Sambal by Kazel (https://sambal.chayrawellness.com)
+User-agent: *
+Allow: /
+
+# Private & Transactional Pages
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /checkout
+Disallow: /checkout.html
+Disallow: /keranjang
+Disallow: /keranjang.html
+Disallow: /riwayat
+Disallow: /riwayat.html
+Disallow: /status
+Disallow: /status.html
+
+# Sitemap
+Sitemap: https://sambal.chayrawellness.com/sitemap.xml

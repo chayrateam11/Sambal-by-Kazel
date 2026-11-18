@@ -833,66 +833,54 @@
   }
 
   /**
-   * Sinkronisasi data status & nomor resi real-time dari Google Sheets
+   * Sinkronisasi data status & nomor resi real-time dari Backend API (/api/status)
    */
   async function syncStatusFromGoogleSheets(invoiceNumber, localOrder) {
-    const sheetUrl = window.APP_CONFIG ? window.APP_CONFIG.GOOGLE_SHEET_URL : '';
-    if (!sheetUrl || sheetUrl === 'PASTE_URL_WEB_APP_APPS_SCRIPT_DISINI' || !sheetUrl.startsWith('http')) {
-      return;
-    }
+    const statusEndpoint = (window.APP_CONFIG && window.APP_CONFIG.STATUS_ENDPOINT) || '/api/status';
 
     try {
-      // Gunakan query param _t agar request tidak di-cache oleh browser
-      const fetchUrl = sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+      // Panggil backend proxy yang hanya mengembalikan status invoice ini (privasi terlindungi)
+      const fetchUrl = `${statusEndpoint}?invoice=${encodeURIComponent(invoiceNumber)}&_t=${Date.now()}`;
       const res = await fetch(fetchUrl, {
         method: 'GET',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache'
-        },
-        redirect: 'follow'
+        }
       });
       const json = await res.json();
-      if (!json || json.status !== 'success' || !Array.isArray(json.data)) return;
+      if (!json || !json.success || !json.order) return;
 
-      const targetId = String(invoiceNumber).trim().toUpperCase();
-      const match = json.data.find(r => {
-        const inv = r.Invoice || r.invoice || r.orderId || r.invoiceNumber;
-        return inv && String(inv).trim().toUpperCase() === targetId;
-      });
+      const remoteStatus = json.order.status || '';
+      const remoteResi = json.order.trackingNumber || '';
 
-      if (match) {
-        const remoteStatus = match.Status || match.status || '';
-        const remoteResi = match.NoResi || match.noResi || match.trackingNumber || match.Resi || match.resi || '';
+      let isUpdated = false;
+      if (remoteStatus && remoteStatus !== localOrder.status) {
+        localOrder.status = remoteStatus;
+        isUpdated = true;
+      }
+      if (remoteResi && remoteResi !== localOrder.trackingNumber) {
+        localOrder.trackingNumber = remoteResi;
+        localOrder.noResi = remoteResi;
+        isUpdated = true;
+      }
 
-        let isUpdated = false;
-        if (remoteStatus && remoteStatus !== localOrder.status) {
-          localOrder.status = remoteStatus;
-          isUpdated = true;
-        }
-        if (remoteResi && remoteResi !== localOrder.trackingNumber) {
-          localOrder.trackingNumber = remoteResi;
-          localOrder.noResi = remoteResi;
-          isUpdated = true;
-        }
+      if (isUpdated) {
+        // Update ke localStorage
+        updateLocalOrderStorage(localOrder);
+        // Re-render Timeline secara langsung
+        updateTimelineUI(localOrder);
+        // Re-populate Printable Invoice
+        populatePrintableInvoice(localOrder);
 
-        if (isUpdated) {
-          // Update ke localStorage
-          updateLocalOrderStorage(localOrder);
-          // Re-render Timeline secara langsung
-          updateTimelineUI(localOrder);
-          // Re-populate Printable Invoice
-          populatePrintableInvoice(localOrder);
-
-          if (remoteStatus.toLowerCase().includes('kirim') && remoteResi) {
-            if (typeof showToast === 'function') {
-              showToast(`Status Pesanan Diperbarui: Sedang dikirim kurir (${remoteResi})!`, 'info');
-            }
+        if (remoteStatus.toLowerCase().includes('kirim') && remoteResi) {
+          if (typeof showToast === 'function') {
+            showToast(`Status Pesanan Diperbarui: Sedang dikirim kurir (${remoteResi})!`, 'info');
           }
         }
       }
     } catch (err) {
-      console.warn('Gagal sinkronisasi data status Google Sheets:', err);
+      console.warn('Gagal sinkronisasi data status dari backend API:', err);
     }
   }
 

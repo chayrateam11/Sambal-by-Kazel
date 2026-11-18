@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout Pembayaran - Sambal by Kazel</title>
+  <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="Selesaikan pemesanan aneka sambal kemasan Sambal by Kazel dengan pengiriman aman dan metode pembayaran lengkap QRIS, Virtual Account, dan COD.">
   <link rel="icon" type="image/png" href="/assets/images/logo.png">
   
@@ -64,6 +65,10 @@
 
       <!-- MAIN CHECKOUT FORM & STICKY SUMMARY -->
       <form id="checkoutForm" onsubmit="handleFormSubmit(event)" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <!-- Anti-Bot Honeypot Field (Hidden from real users) -->
+        <div style="position: absolute; left: -9999px; top: -9999px; opacity: 0; pointer-events: none;" aria-hidden="true">
+          <input type="text" id="userWebsiteAddress" name="user_website_hp" tabindex="-1" autocomplete="off">
+        </div>
         
         <!-- LEFT COLUMN: FORM DETAILS (7 Cols) -->
         <div class="lg:col-span-7 space-y-6">

@@ -582,7 +582,6 @@ function createJsonResponse(obj) {
 /**
  * Mengambil PIN Admin dari Script Properties
  * Dapat disetel di Google Apps Script editor: Project Settings > Script Properties > ADMIN_PIN
- * Fallback sementara jika belum disetel: '202688'
  */
 function getAdminPin() {
   try {
@@ -594,7 +593,8 @@ function getAdminPin() {
   } catch (e) {
     Logger.log('Gagal membaca ScriptProperties: ' + e);
   }
-  return '202688'; // Fallback default
+  // Tidak ada hardcoded PIN default; wajib disetel di Script Properties
+  return '';
 }
 
 /**

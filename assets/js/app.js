@@ -14,13 +14,14 @@
 // 1. GLOBAL CONFIGURATION & FEATURE FLAGS
 // ============================================================================
 const APP_CONFIG = {
-  ADMIN_PIN: '202688',
   ENABLE_PAYMENT_GATEWAY: false, // Dimatikan sementara hingga API Midtrans/Xendit siap
   PAYMENT_ENDPOINT: '/api/payment',
-  GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbxYKZ5-5tLuU-rhaTE-1fCUZZoKT8ej9piDrcDP2AWAKucJ617cRSxqnygHGRUX5cfD/exec',
+  ORDER_ENDPOINT: '/api/order',
+  STATUS_ENDPOINT: '/api/status',
+  ADMIN_ENDPOINT: '/api/admin',
   // URL Spreadsheet Google Sheets pesanan untuk dibuka langsung oleh Admin/Owner
   // Ganti link di bawah dengan link URL Google Spreadsheet database toko Anda:
-  GOOGLE_SHEET_SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit', // Fallback otomatis ke Google Drive / Sheets jika belum diatur
+  GOOGLE_SHEET_SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit',
   WHATSAPP_ADMIN: '6281234567890'
 };
 window.APP_CONFIG = APP_CONFIG;
@@ -617,112 +618,92 @@ function generateWhatsAppOrderLink(order) {
 // 6. GOOGLE SHEETS SYNC & PAYMENT GATEWAY INTEGRATION
 // ============================================================================
 async function submitOrderToGoogleSheets(orderData) {
-  if (!APP_CONFIG.GOOGLE_SHEET_URL || APP_CONFIG.GOOGLE_SHEET_URL === 'PASTE_URL_WEB_APP_APPS_SCRIPT_DISINI') {
-    console.info('Integrasi Google Sheets: URL Web App Apps Script belum disetel.');
-    return false;
-  }
+  const endpoint = (window.APP_CONFIG && window.APP_CONFIG.ORDER_ENDPOINT) || '/api/order';
 
   try {
     const fullAddress = `${orderData.customerAddress}, ${orderData.customerCity} (${orderData.customerPostal || ''})`;
     
-    // Siapkan daftar item dalam format array objek [{ name, qty }] dan string tersusun ke bawah (\n)
+    // Siapkan daftar item dalam format array objek [{ id, name, size, price, qty }]
     const itemsArray = Array.isArray(orderData.items)
       ? orderData.items.map(i => ({
+          id: i.id || '',
           name: i.size ? `${i.name} (${i.size})` : (i.name || 'Produk'),
+          size: i.size || '150g',
+          price: i.price || 0,
           qty: i.qty || 1
         }))
       : [];
 
-    const itemsFormattedText = itemsArray.length > 0
-      ? itemsArray.map(item => `• ${item.name} (${item.qty}x)`).join('\n')
-      : (typeof orderData.items === 'string' ? orderData.items : '-');
-
     const notesFormatted = [orderData.kitchenNote, orderData.giftCardNote ? `Kado: ${orderData.giftCardNote}` : ''].filter(Boolean).join(' | ');
-
-    // Bedakan status awal COD vs Non-COD
     const isCod = String(orderData.paymentMethodName || orderData.paymentCode || '').toLowerCase().includes('cod');
     const orderStatus = orderData.status || (isCod ? 'Diproses' : 'Menunggu Pembayaran');
-    const buktiBayar = orderData.buktiBayar || orderData.paymentProofUrl || '-';
 
     const payload = {
-      // Keys Standar & Kompatibel (Mendukung skrip EN & ID)
-      orderId: orderData.invoiceNumber,
-      invoice: orderData.invoiceNumber,
       invoiceNumber: orderData.invoiceNumber,
       customerName: orderData.customerName,
-      nama: orderData.customerName,
-      whatsapp: orderData.customerPhone,
+      customerPhone: orderData.customerPhone,
+      customerAddress: orderData.customerAddress,
+      customerCity: orderData.customerCity,
+      customerPostal: orderData.customerPostal,
       address: fullAddress,
-      alamat: fullAddress,
-      items: itemsArray.length > 0 ? itemsArray : itemsFormattedText,
-      itemsText: itemsFormattedText,
-      totalAmount: orderData.grandTotal,
-      total: orderData.grandTotal,
-      totalBayar: orderData.grandTotal,
+      items: itemsArray,
       grandTotal: orderData.grandTotal,
-      shippingCourier: orderData.courierName,
-      courier: orderData.courierName,
-      kurir: orderData.courierName,
-      paymentMethod: orderData.paymentMethodName,
-      metodeBayar: orderData.paymentMethodName,
-      notes: notesFormatted,
-      catatan: notesFormatted,
+      courierCode: orderData.courierCode || 'paxel',
+      courierName: orderData.courierName,
+      shippingFee: orderData.shippingFee,
+      paymentMethodName: orderData.paymentMethodName,
+      couponCode: orderData.couponCode || '',
+      kitchenNote: orderData.kitchenNote || '',
+      giftCardNote: orderData.giftCardNote || '',
+      user_website_hp: orderData.user_website_hp || '', // Anti-bot honeypot
       status: orderStatus,
-      trackingNumber: orderData.trackingNumber || '',
-      noResi: orderData.noResi || orderData.trackingNumber || '',
-      buktiBayar: buktiBayar,
-      paymentProofUrl: buktiBayar,
       createdAt: orderData.createdAt || new Date().toISOString()
     };
 
-    // no-cors fetch sesuai arsitektur Google Apps Script Web App
-    await fetch(APP_CONFIG.GOOGLE_SHEET_URL, {
+    const response = await fetch(endpoint, {
       method: 'POST',
-      mode: 'no-cors',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     });
-    return true;
+
+    if (response.ok) {
+      const resJson = await response.json().catch(() => ({}));
+      return resJson.success !== false;
+    }
+    return false;
   } catch (err) {
-    console.warn('Gagal sinkronisasi data pesanan ke Google Sheets:', err);
+    console.warn('Gagal sinkronisasi data pesanan ke backend API:', err);
     return false;
   }
 }
 
 /**
- * Mengunggah data foto bukti transfer (Base64) ke Google Apps Script (Drive)
+ * Mengunggah data foto bukti transfer (Base64) ke Cloudflare Pages Functions (/api/order)
  */
 async function submitPaymentProofToGoogleSheets({ invoice, name, imageBase64 }) {
-  if (!APP_CONFIG.GOOGLE_SHEET_URL) {
-    return { success: false, message: 'Google Sheets URL belum disetel' };
-  }
+  const endpoint = (window.APP_CONFIG && window.APP_CONFIG.ORDER_ENDPOINT) || '/api/order';
 
   try {
     const payload = {
       action: 'uploadProof',
       invoice: invoice,
-      invoiceNumber: invoice,
       nama: name,
       customerName: name,
       image: imageBase64
     };
 
-    const response = await fetch(APP_CONFIG.GOOGLE_SHEET_URL, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     });
 
-    try {
-      const result = await response.json();
-      return { success: result.status === 'success', data: result };
-    } catch (parseErr) {
-      return { success: true };
-    }
+    const result = await response.json();
+    return { success: result.success !== false, data: result };
   } catch (err) {
     console.error('Error saat upload bukti pembayaran:', err);
     return { success: false, error: err };

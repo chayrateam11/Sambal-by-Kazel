@@ -11,7 +11,11 @@ desktop.ini
 # Environment and Secret Files
 .env
 .env.*
+.dev.vars
+.dev.vars.*
 !.env.example
+wrangler.toml
+.wrangler/
 *.pem
 *.key
 *.cert

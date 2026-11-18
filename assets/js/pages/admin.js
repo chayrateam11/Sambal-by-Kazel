@@ -121,7 +121,6 @@
   const BRUTEFORCE_ATTEMPTS_KEY = 'sbk_admin_attempts';
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // Cooldown 5 menit
-  const DEFAULT_ADMIN_PIN = (window.APP_CONFIG && window.APP_CONFIG.ADMIN_PIN) || '202688';
   let lockoutTimer = null;
   let isVerifyingPin = false;
 
@@ -346,63 +345,47 @@
     const enteredPin = elements.pinInputs.map(i => i.value).join('');
     if (enteredPin.length < 6) return;
 
-    // 1. Verifikasi langsung dengan PIN default 202688 (instan & tanpa kendala jaringan/server)
-    if (enteredPin === DEFAULT_ADMIN_PIN || enteredPin === '202688') {
-      localStorage.removeItem(BRUTEFORCE_LOCKOUT_KEY);
-      localStorage.removeItem(BRUTEFORCE_ATTEMPTS_KEY);
-      sessionStorage.setItem('sbk_admin_token', 'sbk_admin_token_' + Date.now());
-      sessionStorage.setItem('sbk_admin_auth', 'true');
-      setInputsDisabled(false);
+    isVerifyingPin = true;
+    setInputsDisabled(true);
+    showPinError('Memverifikasi PIN keamanan ke server...');
 
-      if (typeof showToast === 'function') {
-        showToast('Login Administrator Berhasil!', 'success');
-      }
-      showDashboard();
-      return;
-    }
+    const adminEndpoint = (window.APP_CONFIG && window.APP_CONFIG.ADMIN_ENDPOINT) || '/api/admin';
 
-    // 2. Jika bukan PIN default, periksa ke Google Apps Script (jika ada custom PIN di Script Properties)
-    const sheetUrl = window.APP_CONFIG ? window.APP_CONFIG.GOOGLE_SHEET_URL : '';
-    if (sheetUrl && sheetUrl.startsWith('http') && !sheetUrl.includes('PASTE_URL')) {
-      isVerifyingPin = true;
-      setInputsDisabled(true);
-      showPinError('Memverifikasi PIN keamanan ke server...');
+    try {
+      const response = await fetch(adminEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'login',
+          pin: enteredPin
+        })
+      });
 
-      try {
-        const response = await fetch(sheetUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action: 'verifyAdmin',
-            pin: enteredPin
-          })
-        });
+      const result = await response.json();
 
-        const result = await response.json();
+      if (response.ok && result.success && result.token) {
+        // Autentikasi server berhasil
+        localStorage.removeItem(BRUTEFORCE_LOCKOUT_KEY);
+        localStorage.removeItem(BRUTEFORCE_ATTEMPTS_KEY);
+        sessionStorage.setItem('sbk_admin_token', result.token);
+        sessionStorage.setItem('sbk_admin_auth', 'true');
+        setInputsDisabled(false);
 
-        if (result && result.status === 'success' && result.token) {
-          // Berhasil autentikasi
-          localStorage.removeItem(BRUTEFORCE_LOCKOUT_KEY);
-          localStorage.removeItem(BRUTEFORCE_ATTEMPTS_KEY);
-          sessionStorage.setItem('sbk_admin_token', result.token);
-          sessionStorage.setItem('sbk_admin_auth', 'true');
-          setInputsDisabled(false);
-
-          if (typeof showToast === 'function') {
-            showToast('Login Administrator Berhasil!', 'success');
-          }
-          showDashboard();
-          return;
+        if (typeof showToast === 'function') {
+          showToast('Login Administrator Berhasil!', 'success');
         }
-      } catch (err) {
-        console.warn('Verifikasi server belum merespons:', err);
-      } finally {
-        isVerifyingPin = false;
+        showDashboard();
+        return;
+      } else {
+        handleFailedAuth(result.message || 'PIN yang Anda masukkan salah');
       }
+    } catch (err) {
+      console.warn('Verifikasi server gagal terhubung:', err);
+      handleFailedAuth('Gagal menghubungi server verifikasi admin');
+    } finally {
+      isVerifyingPin = false;
+      setInputsDisabled(false);
     }
-
-    // 3. Jika salah (bukan 202688 dan gagal di server)
-    handleFailedAuth('PIN yang Anda masukkan salah');
   }
 
   function handleFailedAuth(errorMsg) {
@@ -473,67 +456,74 @@
       showTableLoading(true);
     }
 
-    const sheetUrl = window.APP_CONFIG ? window.APP_CONFIG.GOOGLE_SHEET_URL : '';
-    const isUrlConfigured = sheetUrl && sheetUrl !== 'PASTE_URL_WEB_APP_APPS_SCRIPT_DISINI' && sheetUrl.startsWith('http');
+    const adminEndpoint = (window.APP_CONFIG && window.APP_CONFIG.ADMIN_ENDPOINT) || '/api/admin';
+    const adminToken = sessionStorage.getItem('sbk_admin_token') || '';
 
-    if (isUrlConfigured) {
-      try {
-        // Cache-busting query parameter _t agar browser tidak meng-cache data Google Apps Script
-        const fetchUrl = sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
-        const response = await fetch(fetchUrl, {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          },
-          redirect: 'follow'
-        });
-        const result = await response.json();
+    try {
+      const fetchUrl = adminEndpoint + '?action=getOrders&_t=' + Date.now();
+      const response = await fetch(fetchUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + adminToken,
+          'X-Admin-Token': adminToken,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
 
-        if (result && result.status === 'success' && Array.isArray(result.data)) {
-          const newFingerprint = computeFingerprint(result.data);
-          const hasChanged = newFingerprint !== lastDataFingerprint;
+      if (response.status === 401 || response.status === 403) {
+        if (typeof showToast === 'function') {
+          showToast('Sesi administrator telah habis. Silakan login kembali.', 'error');
+        }
+        window.adminLogout();
+        return;
+      }
 
-          const now = new Date();
-          lastSyncTimeFormatted = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+      const result = await response.json();
 
-          if (hasChanged || allOrders.length === 0) {
-            // Ambil elemen input yang sedang difokuskan pengguna (agar tidak hilang ketikannya)
-            const activeEl = document.activeElement;
-            const activeId = (activeEl && activeEl.tagName === 'INPUT') ? activeEl.id : null;
-            const activeVal = activeId ? activeEl.value : null;
+      if (result && (result.success || result.status === 'success') && Array.isArray(result.data)) {
+        const newFingerprint = computeFingerprint(result.data);
+        const hasChanged = newFingerprint !== lastDataFingerprint;
 
-            allOrders = normalizeOrders(result.data);
-            lastDataFingerprint = newFingerprint;
-            isCloudConnected = true;
-            updateConnectionStatus(true, lastSyncTimeFormatted);
-            renderDashboard();
+        const now = new Date();
+        lastSyncTimeFormatted = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
 
-            // Kembalikan nilai & fokus input jika pengguna sedang mengetik nomor resi
-            if (activeId && activeVal !== null) {
-              const restoredEl = document.getElementById(activeId);
-              if (restoredEl) {
-                restoredEl.value = activeVal;
-                restoredEl.focus();
-              }
+        if (hasChanged || allOrders.length === 0) {
+          // Ambil elemen input yang sedang difokuskan pengguna (agar tidak hilang ketikannya)
+          const activeEl = document.activeElement;
+          const activeId = (activeEl && activeEl.tagName === 'INPUT') ? activeEl.id : null;
+          const activeVal = activeId ? activeEl.value : null;
+
+          allOrders = normalizeOrders(result.data);
+          lastDataFingerprint = newFingerprint;
+          isCloudConnected = true;
+          updateConnectionStatus(true, lastSyncTimeFormatted);
+          renderDashboard();
+
+          // Kembalikan nilai & fokus input jika pengguna sedang mengetik nomor resi
+          if (activeId && activeVal !== null) {
+            const restoredEl = document.getElementById(activeId);
+            if (restoredEl) {
+              restoredEl.value = activeVal;
+              restoredEl.focus();
             }
-
-            if (isBackground && typeof showToast === 'function') {
-              showToast('Data otomatis tersinkron dari Google Sheets!', 'info');
-            }
-          } else {
-            isCloudConnected = true;
-            updateConnectionStatus(true, lastSyncTimeFormatted);
           }
 
-          showTableLoading(false);
-          if (refreshIcon) refreshIcon.classList.remove('animate-spin');
-          isSyncing = false;
-          return;
+          if (isBackground && typeof showToast === 'function') {
+            showToast('Data otomatis tersinkron dari database!', 'info');
+          }
+        } else {
+          isCloudConnected = true;
+          updateConnectionStatus(true, lastSyncTimeFormatted);
         }
-      } catch (err) {
-        console.warn('Gagal sinkronisasi data dari Google Sheets:', err);
+
+        showTableLoading(false);
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+        isSyncing = false;
+        return;
       }
+    } catch (err) {
+      console.warn('Gagal sinkronisasi data dari admin backend API:', err);
     }
 
     // Fallback jika Google Sheets offline
@@ -649,7 +639,7 @@
   }
 
   function updateConnectionStatus(connected, lastSyncTime) {
-    const isUrlConfigured = window.APP_CONFIG && window.APP_CONFIG.GOOGLE_SHEET_URL && window.APP_CONFIG.GOOGLE_SHEET_URL !== 'PASTE_URL_WEB_APP_APPS_SCRIPT_DISINI' && window.APP_CONFIG.GOOGLE_SHEET_URL.startsWith('http');
+    const isUrlConfigured = true; // Terhubung via Cloudflare Pages Functions /api/admin
 
     if (elements.connectionBadge) {
       if (connected || isUrlConfigured) {
@@ -1009,63 +999,54 @@
       showToast(`Pesanan ${invoiceNumber} diubah ke '${newStatus}'${resiInfo}`, 'success');
     }
 
-    // 3. Kirim update ke Google Sheets (Simpan Status Kolom K & NoResi Kolom L secara bersamaan)
-    const sheetUrl = window.APP_CONFIG ? window.APP_CONFIG.GOOGLE_SHEET_URL : '';
-    const isUrlConfigured = sheetUrl && sheetUrl !== 'PASTE_URL_WEB_APP_APPS_SCRIPT_DISINI' && sheetUrl.startsWith('http');
+    // 3. Kirim update ke Admin Backend API (Simpan Status Kolom K & NoResi Kolom L secara bersamaan)
+    const adminEndpoint = (window.APP_CONFIG && window.APP_CONFIG.ADMIN_ENDPOINT) || '/api/admin';
+    const resiClean = order.trackingNumber || '';
+    const adminToken = sessionStorage.getItem('sbk_admin_token') || '';
 
-    if (isUrlConfigured) {
-      const resiClean = order.trackingNumber || '';
-      const adminToken = sessionStorage.getItem('sbk_admin_token') || 'sbk_admin_token_active';
+    if (!adminToken) {
+      if (typeof showToast === 'function') {
+        showToast('Sesi autentikasi telah habis. Silakan login kembali.', 'error');
+      }
+      window.adminLogout();
+      return;
+    }
 
-      if (!adminToken) {
-        if (typeof showToast === 'function') {
-          showToast('Sesi autentikasi telah habis. Silakan login kembali.', 'error');
+    const payload = {
+      action: 'updateStatus',
+      invoice: invoiceNumber,
+      status: newStatus,
+      noResi: resiClean
+    };
+
+    try {
+      fetch(adminEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + adminToken,
+          'X-Admin-Token': adminToken
+        },
+        body: JSON.stringify(payload)
+      }).then(res => {
+        if (res.status === 401 || res.status === 403) {
+          if (typeof showToast === 'function') {
+            showToast('Sesi autentikasi habis saat update. Silakan login kembali.', 'error');
+          }
+          window.adminLogout();
         }
-        window.adminLogout();
-        return;
-      }
+      }).catch(() => {});
 
-      const payload = {
-        action: 'updateStatus',
-        token: adminToken,
-        adminToken: adminToken,
-        orderId: invoiceNumber,
-        invoice: invoiceNumber,
-        invoiceNumber: invoiceNumber,
-        status: newStatus,
-        noResi: resiClean,
-        trackingNumber: resiClean,
-        resi: resiClean
-      };
+      // Update fingerprint lokal agar polling tidak mendeteksi perubahan ganda
+      lastDataFingerprint = computeFingerprint(allOrders);
 
-      try {
-        // A. Kirim request POST ke Google Apps Script
-        fetch(sheetUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        }).catch(() => {});
+      // Jadwalkan sinkronisasi verifikasi 2 detik kemudian
+      setTimeout(() => {
+        if (!isSyncing) loadOrdersData(true);
+      }, 2000);
 
-        // B. Kirim request GET Fallback (Memastikan update tersimpan 100% tanpa hambatan CORS)
-        const getUrl = `${sheetUrl}${sheetUrl.includes('?') ? '&' : '?'}action=updateStatus&invoice=${encodeURIComponent(invoiceNumber)}&status=${encodeURIComponent(newStatus)}&noResi=${encodeURIComponent(resiClean)}&token=${encodeURIComponent(adminToken)}&_t=${Date.now()}`;
-        fetch(getUrl, {
-          method: 'GET',
-          redirect: 'follow',
-          headers: { 'Cache-Control': 'no-cache' }
-        }).catch(() => {});
-
-        // Update fingerprint lokal agar polling tidak mendeteksi perubahan ganda
-        lastDataFingerprint = computeFingerprint(allOrders);
-
-        // Jadwalkan sinkronisasi verifikasi 2 detik kemudian
-        setTimeout(() => {
-          if (!isSyncing) loadOrdersData(true);
-        }, 2000);
-
-      } catch (err) {
-        console.warn('Gagal sync update status ke Google Sheets:', err);
-      }
+    } catch (err) {
+      console.warn('Gagal sync update status ke backend API:', err);
     }
   };
 

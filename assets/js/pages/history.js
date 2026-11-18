@@ -167,35 +167,43 @@
   }
 
   async function syncHistoryFromCloud() {
-    const sheetUrl = window.APP_CONFIG ? window.APP_CONFIG.GOOGLE_SHEET_URL : '';
-    if (!sheetUrl || !sheetUrl.startsWith('http') || sheetUrl.includes('PASTE_URL')) return;
+    const statusEndpoint = (window.APP_CONFIG && window.APP_CONFIG.STATUS_ENDPOINT) || '/api/status';
+    let history = typeof getOrderHistory === 'function' ? getOrderHistory() : [];
+    if (!history || history.length === 0) return;
+
+    const invoices = history.map(o => o.invoiceNumber).filter(Boolean);
+    if (invoices.length === 0) return;
 
     try {
-      const res = await fetch(sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + '_t=' + Date.now(), {
-        method: 'GET',
-        headers: { 'Cache-Control': 'no-cache' },
-        redirect: 'follow'
+      const res = await fetch(statusEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify({ invoices: invoices })
       });
+
       const json = await res.json();
-      if (json && json.status === 'success' && Array.isArray(json.data)) {
-        let history = typeof getOrderHistory === 'function' ? getOrderHistory() : [];
+      if (json && json.success && Array.isArray(json.orders) && json.orders.length > 0) {
         let hasChanges = false;
 
         history = history.map(order => {
           const cleanInv = (order.invoiceNumber || '').replace(/^#/, '').toUpperCase();
-          const remote = json.data.find(d => {
-            const rInv = (d.Invoice || d.invoice || d.orderId || '').replace(/^#/, '').toUpperCase();
+          const remote = json.orders.find(d => {
+            const rInv = (d.invoiceNumber || d.invoice || '').replace(/^#/, '').toUpperCase();
             return rInv === cleanInv;
           });
           if (remote) {
-            const remoteStatus = remote.Status || remote.status;
-            const remoteResi = remote.NoResi || remote.noResi || remote.Resi || remote.resi;
+            const remoteStatus = remote.status;
+            const remoteResi = remote.trackingNumber;
             if (remoteStatus && remoteStatus !== order.status) {
               order.status = remoteStatus;
               hasChanges = true;
             }
             if (remoteResi && remoteResi !== order.trackingNumber) {
               order.trackingNumber = remoteResi;
+              order.noResi = remoteResi;
               hasChanges = true;
             }
           }
@@ -208,7 +216,7 @@
         }
       }
     } catch (e) {
-      console.warn('Sync riwayat cloud background:', e);
+      console.warn('Sync riwayat dari backend API:', e);
     }
   }
 

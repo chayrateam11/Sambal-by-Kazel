@@ -201,6 +201,7 @@ function handleFormSubmit(e) {
     grandTotal: calcs.grandTotal,
     giftCardNote: giftNote,
     kitchenNote: kitchenNote,
+    user_website_hp: document.getElementById('userWebsiteAddress')?.value || '',
     status: initialStatus,
     buktiBayar: ''
   };

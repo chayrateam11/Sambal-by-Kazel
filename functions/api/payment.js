@@ -1,47 +1,118 @@
 /**
- * Cloudflare Pages Functions - Payment Gateway API Endpoint
+ * Cloudflare Pages Functions - Payment Gateway API Endpoint (Hardened)
  * Path: /api/payment (mapped from functions/api/payment.js)
  * 
- * Template disiapkan untuk integrasi payment gateway (Midtrans Snap / Xendit Invoice).
- * Parameter konfigurasi dapat disetel via Environment Variables di Cloudflare Pages Dashboard:
- * - MIDTRANS_SERVER_KEY / XENDIT_SECRET_KEY
- * - IS_PRODUCTION (true / false)
+ * Fitur Keamanan:
+ * 1. Restriksi CORS hanya ke domain resmi (tidak wildcard '*')
+ * 2. Validasi Origin / Referer (CSRF protection)
+ * 3. Sanitasi input string & pembersihan karakter kontrol
+ * 4. Validasi kuantitas item integer positif (>= 1)
+ * 5. Kunci rahasia server (Server Key) hanya dibaca dari context.env
  */
+
+const PRODUCT_BASE_PRICES = {
+  'sambal-cumi-ijo': 34000,
+  'sambal-bawang-juara': 28000,
+  'sambal-roa-asap': 38000,
+  'sambal-teri-crispy': 32000,
+  'sambal-terasi-bakar': 31000,
+  'sambal-matah-kecombrang': 35000,
+  'paket-pesta-pedas': 89000,
+  'addon-sendok-kayu': 5000,
+  'addon-kerupuk-putih': 8000
+};
+
+function sanitizeString(input) {
+  if (typeof input !== 'string') return String(input || '');
+  return input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
+}
+
+function isValidOrigin(request, env) {
+  const allowedProdOrigin = env?.ALLOWED_ORIGIN || 'https://sambal.chayrawellness.com';
+  const origin = request.headers.get('Origin');
+  const referer = request.headers.get('Referer');
+
+  if (!origin && !referer) return true;
+
+  const checkUrl = origin || referer || '';
+  try {
+    const host = new URL(checkUrl).hostname;
+    if (checkUrl.startsWith(allowedProdOrigin) || host === 'sambal.chayrawellness.com') return true;
+    if (host.endsWith('.pages.dev') || host === 'localhost' || host === '127.0.0.1') return true;
+  } catch (e) {
+    return false;
+  }
+  return false;
+}
 
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  // Header CORS untuk komunikasi client-side
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': env?.ALLOWED_ORIGIN || 'https://sambal.chayrawellness.com',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json'
   };
 
+  if (!isValidOrigin(request, env)) {
+    return new Response(JSON.stringify({
+      success: false,
+      message: 'Akses ditolak: Permintaan lintas domain tidak sah.'
+    }), { status: 403, headers: corsHeaders });
+  }
+
   try {
     const payload = await request.json();
-    const {
-      invoiceNumber,
-      customerName,
-      customerPhone,
-      customerEmail,
-      grandTotal,
-      items,
-      courierName,
-      shippingFee
-    } = payload;
+    const invoiceNumber = sanitizeString(payload.invoiceNumber || payload.invoice || '');
+    const customerName = sanitizeString(payload.customerName || payload.nama || '');
+    const customerPhone = sanitizeString(payload.customerPhone || payload.whatsapp || '');
+    const customerEmail = sanitizeString(payload.customerEmail || '');
+    const courierName = sanitizeString(payload.courierName || 'Paxel Next Day');
+    const items = payload.items;
 
-    // Validasi payload minimum
-    if (!invoiceNumber || !grandTotal || !items || !Array.isArray(items)) {
+    if (!invoiceNumber || !items || !Array.isArray(items) || items.length === 0) {
       return new Response(JSON.stringify({
         success: false,
-        message: 'Payload tidak lengkap. Diperlukan invoiceNumber, grandTotal, dan items.'
+        message: 'Payload tidak lengkap. Diperlukan invoiceNumber dan daftar items.'
       }), {
         status: 400,
         headers: corsHeaders
       });
     }
+
+    // Validasi kuantitas item integer positif & hitung total otoritatif
+    let calculatedSubtotal = 0;
+    const validatedItems = [];
+
+    for (const item of items) {
+      const qty = Number(item.qty);
+      if (!Number.isInteger(qty) || qty < 1) {
+        return new Response(JSON.stringify({
+          success: false,
+          message: 'Kuantitas item harus bilangan bulat positif minimal 1.'
+        }), { status: 400, headers: corsHeaders });
+      }
+
+      const itemId = String(item.id || '').toLowerCase();
+      const basePrice = PRODUCT_BASE_PRICES[itemId];
+      let unitPrice = Number(item.price);
+      if (basePrice !== undefined) {
+        unitPrice = basePrice;
+      }
+      if (isNaN(unitPrice) || unitPrice < 0) unitPrice = 34000;
+
+      calculatedSubtotal += unitPrice * qty;
+      validatedItems.push({
+        id: itemId || 'item',
+        price: Math.round(unitPrice),
+        quantity: qty,
+        name: sanitizeString(item.name || 'Sambal by Kazel').substring(0, 50)
+      });
+    }
+
+    const shippingFee = Number(payload.shippingFee) || 0;
+    const finalGrossAmount = calculatedSubtotal + Math.max(0, shippingFee);
 
     // Cek apakah Server Key Midtrans / Xendit sudah terpasang di Cloudflare Pages Env
     const midtransKey = env?.MIDTRANS_SERVER_KEY;
@@ -59,7 +130,7 @@ export async function onRequestPost(context) {
       const midtransPayload = {
         transaction_details: {
           order_id: invoiceNumber,
-          gross_amount: Math.round(grandTotal)
+          gross_amount: Math.round(finalGrossAmount)
         },
         customer_details: {
           first_name: customerName,
@@ -67,17 +138,12 @@ export async function onRequestPost(context) {
           email: customerEmail || 'pelanggan@sambalbykazel.com'
         },
         item_details: [
-          ...items.map(item => ({
-            id: item.id || item.cartItemId,
-            price: Math.round(item.price),
-            quantity: item.qty,
-            name: (item.name || 'Sambal by Kazel').substring(0, 50)
-          })),
+          ...validatedItems,
           ...(shippingFee > 0 ? [{
             id: 'shipping-fee',
             price: Math.round(shippingFee),
             quantity: 1,
-            name: `Ongkos Kirim (${courierName || 'Ekspedisi'})`
+            name: `Ongkos Kirim (${courierName})`
           }] : [])
         ]
       };
@@ -115,15 +181,15 @@ export async function onRequestPost(context) {
 
       const xenditPayload = {
         external_id: invoiceNumber,
-        amount: Math.round(grandTotal),
+        amount: Math.round(finalGrossAmount),
         description: `Pembelian Sambal by Kazel - ${invoiceNumber}`,
         customer: {
           given_names: customerName,
           mobile_number: customerPhone,
           email: customerEmail || 'pelanggan@sambalbykazel.com'
         },
-        success_redirect_url: `https://sambalbykazel.pages.dev/status.html?id=${invoiceNumber}&status=success`,
-        failure_redirect_url: `https://sambalbykazel.pages.dev/checkout.html?retry=${invoiceNumber}`
+        success_redirect_url: `https://sambal.chayrawellness.com/status?id=${invoiceNumber}&status=success`,
+        failure_redirect_url: `https://sambal.chayrawellness.com/checkout?retry=${invoiceNumber}`
       };
 
       const xenditRes = await fetch(xenditEndpoint, {
@@ -152,8 +218,7 @@ export async function onRequestPost(context) {
     }
 
     // SIMULASI MOCK GATEWAY (Ketika API Key belum disetel di Dashboard Cloudflare)
-    // Berguna untuk pengujian alur front-end & demo payment gateway
-    const mockRedirectUrl = `/status.html?id=${invoiceNumber}&payment=mock_success&amount=${grandTotal}`;
+    const mockRedirectUrl = `/status?id=${invoiceNumber}&payment=mock_success&amount=${finalGrossAmount}`;
     
     return new Response(JSON.stringify({
       success: true,
@@ -177,11 +242,12 @@ export async function onRequestPost(context) {
   }
 }
 
-export async function onRequestOptions() {
+export async function onRequestOptions(context) {
+  const { env } = context;
   return new Response(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': env?.ALLOWED_ORIGIN || 'https://sambal.chayrawellness.com',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400'

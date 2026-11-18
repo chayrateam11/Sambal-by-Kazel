@@ -81,7 +81,7 @@ Sambal_by_Kazel/
    - Unggahan tersimpan otomatis ke folder Google Drive *"Bukti Transfer - Sambal by Kazel"* via serverless Apps Script.
 
 5. **Dashboard Admin & Realtime Two-Way Sync (`admin.html`):**
-   - Keamanan login PIN khusus staf admin/dapur (`PIN: 202688`).
+   - Keamanan login PIN khusus staf admin/dapur dengan autentikasi server-side HMAC-SHA256 (dikonfigurasi via Environment Variable `ADMIN_PIN` di Cloudflare Pages).
    - Filter tab pesanan: *Semua*, *💳 Menunggu Pembayaran*, *🔍 Menunggu Verifikasi*, *🍳 Diproses di Dapur*, *🚚 Dikirim Kurir*, dan *✅ Selesai*.
    - Modal preview foto bukti transfer pembeli dengan tombol verifikasi 1-klik (`Verifikasi Lunas → Diproses`).
    - Sinkronisasi otomatis dua arah (Two-Way Realtime Polling & event listener) tanpa mengganggu fokus ketik admin.
